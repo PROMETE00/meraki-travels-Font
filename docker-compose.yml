@@ -1,0 +1,46 @@
+services:
+  app:
+    build: ./app-reservas
+    container_name: app_reservas
+    env_file: .env
+    ports:
+      - "3000:3000"   # opcional si sólo usarás el túnel
+    depends_on: [db]
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: pg_reservas
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # ports:
+    #   - "5432:5432"  # deja comentado si no quieres exponer la DB
+    restart: unless-stopped
+
+  adminer:
+    image: adminer
+    container_name: adminer_reservas
+    ports:
+      - "8080:8080"
+    depends_on: [db]
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:2025.2.0
+    container_name: cloudflared_tunnel
+    restart: unless-stopped
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARED_TOKEN}
+    command: >
+      tunnel
+      --no-autoupdate
+      run
+      --token ${CLOUDFLARED_TOKEN}
+    depends_on: [app]
+
+volumes:
+  pgdata:

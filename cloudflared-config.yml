@@ -1,0 +1,8 @@
+tunnel: TUNNEL_ID_O_NOMBRE
+credentials-file: /cloudflared-credentials.json
+
+ingress:
+  - hostname: reservas.tudominio.com
+    service: http://app:3000
+  # Si añades más servicios, puedes añadir más reglas aquí.
+  - service: http_status:404
