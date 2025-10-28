@@ -11,6 +11,8 @@ export default function Home() {
         <h1 className="text-2xl font-bold">Agencia de Viajes</h1>
         <p className="text-sm text-zinc-500">MVP</p>
       </header>
+      {/* Buscador */}
+      <Search />
 
       <section
   className="
@@ -22,8 +24,7 @@ export default function Home() {
   <AppDome />
 </section>
 
-      {/* Buscador */}
-      <Search />
+      
 
       {/* Resultados + Mapa */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
