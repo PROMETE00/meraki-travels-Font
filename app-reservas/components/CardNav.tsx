@@ -1,7 +1,11 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
-// use your own icon import if react-icons is not available
+// Icono para los enlaces de las tarjetas
 import { GoArrowUpRight } from 'react-icons/go';
+// Icono de chevrón para abrir/cerrar el menú (sustituye al hamburguesa)
+import { FiChevronDown } from 'react-icons/fi';
+// Hook global para gestionar resultados y estado de carga
+import { useStore } from '@/lib/store';
 
 type CardNavLink = {
   label: string;
@@ -17,8 +21,6 @@ export type CardNavItem = {
 };
 
 export interface CardNavProps {
-  logo: string;
-  logoAlt?: string;
   items: CardNavItem[];
   className?: string;
   ease?: string;
@@ -28,9 +30,12 @@ export interface CardNavProps {
   buttonTextColor?: string;
 }
 
+/**
+ * CardNav genera una barra de navegación translúcida con tarjetas desplegables.
+ * Incluye un campo de búsqueda integrado; al enviar la consulta, se llama a
+ * `/api/search?q=<query>` y se actualizan los resultados a través del store.
+ */
 const CardNav: React.FC<CardNavProps> = ({
-  logo,
-  logoAlt = 'Logo',
   items,
   className = '',
   ease = 'power3.out',
@@ -39,12 +44,19 @@ const CardNav: React.FC<CardNavProps> = ({
   buttonBgColor,
   buttonTextColor
 }) => {
+  // Estado para la animación del menú
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  // Estado local del campo de búsqueda
+  const [query, setQuery] = useState('');
+  // Accedemos al store global para gestionar resultados y estado de carga
+  const { setLoading, setResults, loading } = useStore();
+
   const navRef = useRef<HTMLDivElement | null>(null);
   const cardsRef = useRef<HTMLDivElement[]>([]);
   const tlRef = useRef<gsap.core.Timeline | null>(null);
 
+  // Calcula la altura del menú desplegado (sin cambios respecto al original)
   const calculateHeight = () => {
     const navEl = navRef.current;
     if (!navEl) return 260;
@@ -63,12 +75,14 @@ const CardNav: React.FC<CardNavProps> = ({
         contentEl.style.position = 'static';
         contentEl.style.height = 'auto';
 
+        // Force reflow
         contentEl.offsetHeight;
 
         const topBar = 60;
         const padding = 16;
         const contentHeight = contentEl.scrollHeight;
 
+        // Restore original styles
         contentEl.style.visibility = wasVisible;
         contentEl.style.pointerEvents = wasPointerEvents;
         contentEl.style.position = wasPosition;
@@ -80,6 +94,23 @@ const CardNav: React.FC<CardNavProps> = ({
     return 260;
   };
 
+  // Envía la consulta del campo de búsqueda a la API y actualiza el store
+  const handleSearch = async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      setResults(data.items || []);
+    } catch (err) {
+      console.error(err);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Crea el timeline de animaciones (igual que el original)
   const createTimeline = () => {
     const navEl = navRef.current;
     if (!navEl) return null;
@@ -103,21 +134,19 @@ const CardNav: React.FC<CardNavProps> = ({
   useLayoutEffect(() => {
     const tl = createTimeline();
     tlRef.current = tl;
-
     return () => {
       tl?.kill();
       tlRef.current = null;
     };
   }, [ease, items]);
 
+  // Recalcula alturas al hacer resize
   useLayoutEffect(() => {
     const handleResize = () => {
       if (!tlRef.current) return;
-
       if (isExpanded) {
         const newHeight = calculateHeight();
         gsap.set(navRef.current, { height: newHeight });
-
         tlRef.current.kill();
         const newTl = createTimeline();
         if (newTl) {
@@ -132,11 +161,11 @@ const CardNav: React.FC<CardNavProps> = ({
         }
       }
     };
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isExpanded]);
 
+  // Alterna la expansión del menú y la rotación del chevrón
   const toggleMenu = () => {
     const tl = tlRef.current;
     if (!tl) return;
@@ -151,6 +180,7 @@ const CardNav: React.FC<CardNavProps> = ({
     }
   };
 
+  // Guarda referencias a los contenedores de cada tarjeta para animarlos
   const setCardRef = (i: number) => (el: HTMLDivElement | null) => {
     if (el) cardsRef.current[i] = el;
   };
@@ -161,41 +191,39 @@ const CardNav: React.FC<CardNavProps> = ({
     >
       <nav
         ref={navRef}
-        className={`card-nav ${isExpanded ? 'open' : ''} block h-[60px] p-0 rounded-xl shadow-md relative overflow-hidden will-change-[height]`}
-        style={{ backgroundColor: baseColor }}
+        className={`card-nav ${isExpanded ? 'open' : ''} block h-[60px] p-0 rounded-xl shadow-md relative overflow-hidden will-change-[height] border border-white/10 bg-white/10 backdrop-blur-md`}
       >
         <div className="card-nav-top absolute inset-x-0 top-0 h-[60px] flex items-center justify-between p-2 pl-[1.1rem] z-[2]">
           <div
-            className={`hamburger-menu ${isHamburgerOpen ? 'open' : ''} group h-full flex flex-col items-center justify-center cursor-pointer gap-[6px] order-2 md:order-none`}
+            className={`hamburger-menu group h-full flex items-center justify-center cursor-pointer order-2 md:order-none transition-transform duration-300 ${isHamburgerOpen ? 'rotate-180' : ''}`}
             onClick={toggleMenu}
             role="button"
             aria-label={isExpanded ? 'Close menu' : 'Open menu'}
             tabIndex={0}
             style={{ color: menuColor || '#000' }}
           >
-            <div
-              className={`hamburger-line w-[30px] h-[2px] bg-current transition-[transform,opacity,margin] duration-300 ease-linear [transform-origin:50%_50%] ${
-                isHamburgerOpen ? 'translate-y-[4px] rotate-45' : ''
-              } group-hover:opacity-75`}
-            />
-            <div
-              className={`hamburger-line w-[30px] h-[2px] bg-current transition-[transform,opacity,margin] duration-300 ease-linear [transform-origin:50%_50%] ${
-                isHamburgerOpen ? '-translate-y-[4px] -rotate-45' : ''
-              } group-hover:opacity-75`}
-            />
+            <FiChevronDown size={24} aria-hidden="true" />
           </div>
-
-          <div className="logo-container flex items-center md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 order-1 md:order-none">
-            <img src={logo} alt={logoAlt} className="logo h-[28px]" />
+          {/* Área de búsqueda integrada */}
+          <div className="mb-2 flex items-center gap-2 w-full md:w-[730px]">
+            <input
+              type="text"
+              className="text-center flex-1 rounded-lg bg-white/10 px-3 py-2 text-sm outline-none ring-1 ring-white/15 placeholder-white/70 backdrop-blur-sm"
+              placeholder="Busca tu proximo destino o ingresa tu presupuesto"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSearch();
+              }}
+            />
+            <button
+              onClick={handleSearch}
+              disabled={loading}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60 backdrop-blur-sm"
+            >
+              {loading ? 'Buscando...' : 'Buscar'}
+            </button>
           </div>
-
-          <button
-            type="button"
-            className="card-nav-cta-button hidden md:inline-flex border-0 rounded-[calc(0.75rem-0.2rem)] px-4 h-full font-medium cursor-pointer transition-colors duration-300"
-            style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
-          >
-            Get Started
-          </button>
         </div>
 
         <div
@@ -204,6 +232,8 @@ const CardNav: React.FC<CardNavProps> = ({
           } md:flex-row md:items-end md:gap-[12px]`}
           aria-hidden={!isExpanded}
         >
+
+
           {(items || []).slice(0, 3).map((item, idx) => (
             <div
               key={`${item.label}-${idx}`}
