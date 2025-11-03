@@ -1,44 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import CardNav from "@/components/CardNav";
-import { useStore } from "@/lib/store";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import CardNav, { type CardNavItem } from "@/components/CardNav";
 
-export default function SearchNav() {
-  const [query, setQuery] = useState("");
-  const { setLoading, setResults, loading } = useStore();
-  const handleNavClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = e.target as HTMLElement;
-    if (el.closest("a")) {
-      e.preventDefault();
-    }
-  };
+type Props = {
+  onHeightChange?: (height: number) => void;
+  topRem?: number; // separación respecto al Navbar (por defecto 0.75rem)
+};
 
-  const handleSearch = async () => {
-    // Ignore empty queries; there's nothing to search for.
-    if (!query.trim()) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      setResults(data.items || []);
-    } catch (err) {
-      console.error(err);
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+export default function SearchNav({ onHeightChange, topRem = 0.75 }: Props) {
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const posRef = useRef<HTMLDivElement | null>(null);
+  const [measuredH, setMeasuredH] = useState(0);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
-
-  const logo = "/logo.svg";
-
-  const items = [
+  const items: CardNavItem[] = [
     {
       label: "Buscar",
       bgColor: "#0D0716",
@@ -70,16 +45,64 @@ export default function SearchNav() {
     },
   ];
 
+  // Medición robusta del bloque que contiene a CardNav
+  useLayoutEffect(() => {
+    const el = posRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      const h = Math.round(el.getBoundingClientRect().height);
+      if (h && h !== measuredH) {
+        setMeasuredH(h);
+        onHeightChange?.(h);
+      }
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    const t1 = setTimeout(measure, 180);
+    const t2 = setTimeout(measure, 420);
+    return () => {
+      ro.disconnect();
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (measuredH) onHeightChange?.(measuredH);
+  }, [measuredH, onHeightChange]);
+
+  const topPx = topRem * 16; // 1rem = 16px
+
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <div onClick={handleNavClick} className="cursor-pointer select-none">
-        <CardNav
-          items={items}
-          baseColor="#fff"
-          menuColor="#000"
-          buttonBgColor="#111"
-          buttonTextColor="#fff"
-          ease="power3.out"
+      <div ref={hostRef} className="relative">
+        {/* Wrapper absoluto que posiciona el CardNav */}
+        <div
+          ref={posRef}
+          className="absolute inset-x-0 z-50"
+          style={{ top: `${topRem}rem` }}
+          // Evita que el primer click se propague como "outside click" y cierre
+          onPointerDownCapture={(e) => e.stopPropagation()}
+        >
+          <CardNav
+            items={items}
+            baseColor="#fff"
+            menuColor="#000"
+            buttonBgColor="#111"
+            buttonTextColor="#fff"
+            ease="power3.out"
+          />
+        </div>
+
+        {/* Spacer: mantiene el flujo y no tapa clics */}
+        <div
+          aria-hidden
+          className="pointer-events-none"
+          style={{ height: (measuredH || 64) + topPx }}
         />
       </div>
     </div>
