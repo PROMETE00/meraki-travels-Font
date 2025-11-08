@@ -1,8 +1,7 @@
-tunnel: TUNNEL_ID_O_NOMBRE
-credentials-file: /cloudflared-credentials.json
-
+# cloudflared-config.yml
 ingress:
-  - hostname: reservas.tudominio.com
+  - hostname: reservas.prome.works
     service: http://app:3000
-  # Si añades más servicios, puedes añadir más reglas aquí.
+  - hostname: nocodb.prome.works
+    service: http://nocodb:8080
   - service: http_status:404
