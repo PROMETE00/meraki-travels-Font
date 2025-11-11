@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
+import BackgroundCarousel from "@/components/BackgroundCarousel";
 import BackgroundDots from "@/components/ui/BackgroundDots";
 import Navbar from "@/components/Navbar";
 import SearchNav from "@/components/ui/SearchNav";
@@ -12,7 +13,7 @@ export default function Home() {
   const [navH, setNavH] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
-  // Histeresis: evita abrir/cerrar al instante por pequeñas variaciones de altura
+  // Histeresis: evita abrir/cerrar por variaciones pequeñas de altura
   useEffect(() => {
     if (navH > 170 && !expanded) setExpanded(true);
     if (navH < 130 && expanded) setExpanded(false);
@@ -35,8 +36,23 @@ export default function Home() {
       };
 
   return (
-    <>
-      <BackgroundDots />
+    <div className="relative">
+      {/* Fondo: carrusel (debajo de todo) */}
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <BackgroundCarousel
+          ownerTable="product_package" // cámbialo si quieres filtrar por otro owner
+          ownerId={1}
+          intervalMs={5000}
+          transition="fade"          // "fade" | "slide" | "zoom"
+          className="h-[100svh] w-screen"
+          showArrows
+          showDots
+        />
+        {/* velo sutil para contraste del contenido */}
+        <div className="absolute inset-0 bg-black/30" />
+      </div>
+      {/*<BackgroundDots />*/}
+
       <Navbar />
 
       <main className="mx-auto max-w-6xl px-4 pt-0 pb-12">
@@ -60,6 +76,6 @@ export default function Home() {
           </aside>
         </div>
       </main>
-    </>
+    </div>
   );
 }

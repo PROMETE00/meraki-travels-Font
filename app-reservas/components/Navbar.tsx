@@ -74,7 +74,7 @@ const Navbar: React.FC = () => {
                   <RiInstagramLine size={16} />
                 </Link>
                 <Link
-                  href="https://tiktok.com"
+                  href="https://www.tiktok.com/@merakitravels_?_r=1&_t=ZS-91Jo2LlT8bA"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="TikTok"
