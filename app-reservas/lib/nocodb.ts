@@ -9,44 +9,41 @@ export type ImageAsset = {
 };
 
 const baseUrl  = process.env.NOCODB_BASE_URL!;
-const sharedId = process.env.NOCODB_SHARED_VIEW_ID || "";        // UUID de Share View
-const sharedPwd = process.env.NOCODB_SHARED_VIEW_PASSWORD || ""; // Password de Share View
+const sharedId = process.env.NOCODB_SHARED_VIEW_ID || "";
+const svPwd    = process.env.NOCODB_SHARED_VIEW_PWD || ""; // opcional
 
 export async function fetchImages(
   ownerTable: string,
   ownerId: number,
   limit = 20
 ): Promise<ImageAsset[]> {
-  if (!baseUrl) throw new Error("Falta NOCODB_BASE_URL");
+  if (!baseUrl)  throw new Error("Falta NOCODB_BASE_URL");
+  if (!sharedId) throw new Error("Falta NOCODB_SHARED_VIEW_ID");
 
-  if (sharedId) {
-    const url = new URL(`${baseUrl}/api/v2/public/shared-view/${sharedId}/rows`);
-    url.searchParams.set(
-      "where",
-      JSON.stringify({
-        _and: [{ owner_table: { _eq: ownerTable } }, { owner_id: { _eq: ownerId } }],
-      })
-    );
-    url.searchParams.set("limit", String(limit));
-    url.searchParams.set("sort", JSON.stringify([["is_cover","desc"],["id","asc"]]));
+  const url = new URL(`${baseUrl}/api/v2/public/shared-view/${sharedId}/rows`);
+  url.searchParams.set("where", JSON.stringify({
+    _and: [
+      { owner_table: { _eq: ownerTable } },
+      { owner_id:    { _eq: ownerId } },
+    ],
+  }));
+  url.searchParams.set("limit", String(limit));
+  url.searchParams.set("sort", JSON.stringify([["is_cover","desc"],["id","asc"]]));
 
-    const headers: HeadersInit = {};
-    if (sharedPwd) headers["xc-password"] = sharedPwd; // ⬅️ clave
+  const headers: Record<string,string> = {};
+  if (svPwd) headers["x-shared-view-password"] = svPwd;
 
-    const res = await fetch(url.toString(), { headers, cache: "no-store" });
-    if (!res.ok) throw new Error(`NocoDB ${res.status}: ${await res.text()}`);
+  const res = await fetch(url.toString(), { cache: "no-store", headers });
+  if (!res.ok) throw new Error(`NocoDB ${res.status}: ${await res.text()}`);
 
-    const data = await res.json();
-    const rows: any[] = data?.list ?? data?.rows ?? data ?? [];
-    return rows.map((r) => ({
-      id: Number(r.id),
-      owner_table: String(r.owner_table),
-      owner_id: Number(r.owner_id),
-      path: String(r.path),
-      alt_text: r.alt_text ?? null,
-      is_cover: Boolean(r.is_cover),
-    }));
-  }
-
-  throw new Error("Configura NOCODB_SHARED_VIEW_ID / PASSWORD o agrega fallback.");
+  const data  = await res.json();
+  const rows: any[] = data?.list ?? data?.rows ?? data ?? [];
+  return rows.map((r) => ({
+    id: Number(r.id),
+    owner_table: String(r.owner_table),
+    owner_id: Number(r.owner_id),
+    path: String(r.path),
+    alt_text: r.alt_text ?? null,
+    is_cover: !!r.is_cover,
+  }));
 }
