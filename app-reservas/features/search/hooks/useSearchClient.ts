@@ -1,25 +1,30 @@
 "use client";
+import { http } from "@/lib/http";
 import { useStore } from "@/lib/store";
+import { buildSearchParams, validateSearchCriteria } from "@/lib/validators";
+import type { SearchResponse } from "../types";
 
 export function useSearchClient() {
-  const { criteria, setLoading, setResults } = useStore();
+  const { criteria, setLoading, setResults, setSearchError } = useStore();
 
   async function runSearch() {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        from: criteria.from || "OAX",
-        to: criteria.to || "MEX",
-        dateFrom: criteria.dateFrom || "",
-        dateTo: criteria.dateTo || "",
-        pax: String(criteria.pax || 1),
-      });
-      const res = await fetch(`/api/search?${params.toString()}`);
-      const json = await res.json();
-      setResults(json.items || []);
-    } catch (e) {
-      console.error(e);
+    const validationError = validateSearchCriteria(criteria);
+    if (validationError) {
+      setSearchError(validationError);
       setResults([]);
+      return;
+    }
+
+    setLoading(true);
+    setSearchError(null);
+    try {
+      const params = buildSearchParams(criteria);
+      const json = await http<SearchResponse>(`/api/search?${params.toString()}`);
+      setResults(json.items || []);
+    } catch (error) {
+      console.error(error);
+      setResults([]);
+      setSearchError("No pudimos cargar paquetes reales en este momento.");
     } finally {
       setLoading(false);
     }

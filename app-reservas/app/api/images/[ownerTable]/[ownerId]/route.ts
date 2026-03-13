@@ -10,7 +10,8 @@ export async function GET(
   try {
     const images = await fetchImages(ownerTable, Number(ownerId), 50);
     return NextResponse.json({ images });
-  } catch (e: any) {
-    return NextResponse.json({ error: String(e?.message ?? e) }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

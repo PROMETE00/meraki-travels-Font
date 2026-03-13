@@ -1,36 +1,34 @@
-// app/api/search/route.ts
-//
-// This endpoint handles search queries for flights, hotels and activities. It
-// previously only returned a fixed set of sample items based on `from` and
-// `to` parameters. It now accepts an optional `q` parameter for free‑text
-// searches. When `q` is provided the sample items are filtered by a
-// case‑insensitive match on the `title` field. If no results match, an empty
-// array is returned. When `q` is absent, the original behaviour of
-// constructing sample items from `from` and `to` is preserved.
-
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const q = url.searchParams.get("q");
-  const from = url.searchParams.get("from") ?? "OAX";
-  const to = url.searchParams.get("to") ?? "MEX";
+  const backendBaseUrl = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
 
-  // Static sample data used for demonstration purposes. In a real
-  // application this would query a database or external API.
-  const sampleItems = [
-    { id: "f1", type: "vuelo", title: `Vuelo ${from} → ${to}`, price: 2450 },
-    { id: "h1", type: "hotel", title: `Hotel en ${to} 3⭐`, price: 3100 },
-    { id: "t1", type: "tour", title: `Tour por ${to}`, price: 890 },
-  ];
+  try {
+    const backendUrl = new URL("/api/packages/search", backendBaseUrl);
+    for (const [key, value] of url.searchParams.entries()) {
+      backendUrl.searchParams.set(key, value);
+    }
 
-  let items = sampleItems;
+    const response = await fetch(backendUrl, {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
 
-  // If a search query was provided, filter the sample items by title.
-  if (q) {
-    const lcQuery = q.toLowerCase();
-    items = sampleItems.filter((it) => it.title.toLowerCase().includes(lcQuery));
+    if (!response.ok) {
+      const text = await response.text();
+      return NextResponse.json(
+        { message: text || "No se pudo consultar el backend de paquetes." },
+        { status: response.status },
+      );
+    }
+
+    const payload = await response.json();
+    return NextResponse.json(payload);
+  } catch {
+    return NextResponse.json(
+      { message: "El backend de paquetes no está disponible en este momento." },
+      { status: 502 },
+    );
   }
-
-  return NextResponse.json({ items });
 }

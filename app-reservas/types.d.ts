@@ -12,5 +12,5 @@ export type ResultItem = {
   type: 'vuelo'|'hotel'|'tour'|'actividad';
   title: string;
   price: number;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 };

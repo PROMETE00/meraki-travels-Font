@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import type { ImageAsset } from "@/lib/nocodb";
 
 type Slide = { src: string; alt?: string | null };
+type ImagesResponse = { images?: ImageAsset[] };
 
 type Transition = "fade" | "slide" | "zoom";
 
@@ -38,9 +40,9 @@ export default function BackgroundCarousel({
         `/api/images/${encodeURIComponent(ownerTable)}/${ownerId}?limit=${limit}`,
         { cache: "no-store" }
       );
-      const data = await res.json();
+      const data = (await res.json()) as ImagesResponse;
       if (!cancelled) {
-        const imgs: Slide[] = (data.images ?? []).map((it: any) => ({
+        const imgs: Slide[] = (data.images ?? []).map((it) => ({
           src: it.path,
           alt: it.alt_text,
         }));

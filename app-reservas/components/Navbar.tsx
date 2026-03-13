@@ -7,14 +7,19 @@ import Image from "next/image";
 import { RiInstagramLine } from "react-icons/ri";
 import { FaTiktok, FaBars, FaUserCircle } from "react-icons/fa";
 import { SiFacebook } from "react-icons/si";
+import { useSessionStore } from "@/lib/session-store";
+
+//0d1117
 
 const Navbar: React.FC = () => {
+  const customer = useSessionStore((state) => state.customer);
+
   return (
     // Header ancho completo pero sin fondo; el rectángulo es el contenedor interno
     <header className="w-full bg-transparent">
       {/* Rectángulo centrado */}
-      <div className="mx-auto my-4 max-w-6xl px-4">
-        <div className="rounded-2xl bg-[#0d1117] text-white shadow-lg ring-1 ring-white/10 overflow-hidden">
+      <div className="mx-auto my-2 max-w-6xl px-1">
+        <div className="rounded-2xl bg-[#669094] text-white shadow-lg ring-1 ring-white/10 overflow-hidden">
           {/* Contenido del navbar */}
           <div className="px-4 py-3 flex flex-col">
             {/* Fila inferior: logo, navegación y acciones */}
@@ -35,23 +40,7 @@ const Navbar: React.FC = () => {
                 />
               </Link>
 
-              {/* Navegación principal */}
-              <nav className="hidden md:flex items-center space-x-8 text-sm">
-                <Link
-                  href="/"
-                  className="relative py-1 transition-colors hover:text-purple-400"
-                >
-                  Home
-                  <span className="absolute left-0 -bottom-0.5 right-0 h-[2px] bg-purple-400" />
-                </Link>
-
-                <Link
-                  href="/about"
-                  className="relative py-1 transition-colors hover:text-purple-400"
-                >
-                  About Us
-                </Link>
-              </nav>
+          
 
               {/* Acciones (redes, menú y usuario) */}
               <div className="flex items-center gap-2">
@@ -95,11 +84,14 @@ const Navbar: React.FC = () => {
                 </button>
 
                 <Link
-                  href="/account"
+                  href="/app/perfil"
                   aria-label="Cuenta"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-white/10 bg-white/5 text-white/80 hover:text-white hover:bg-white/10 transition"
+                  className="inline-flex h-9 items-center gap-2 rounded-full ring-1 ring-white/10 bg-white/5 px-3 text-white/80 transition hover:bg-white/10 hover:text-white"
                 >
                   <FaUserCircle size={18} />
+                  <span className="hidden text-xs sm:inline">
+                    {customer ? customer.fullName : "Iniciar sesión"}
+                  </span>
                 </Link>
               </div>
             </div>

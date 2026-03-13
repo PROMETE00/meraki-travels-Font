@@ -1,8 +1,9 @@
 "use client";
 import { useStore } from "@/lib/store";
+import { normalizeAirportCode } from "@/lib/validators";
 
 export default function SearchBar({ onSearch }: { onSearch: () => void }) {
-  const { criteria, setCriteria, loading } = useStore();
+  const { criteria, setCriteria, loading, searchError } = useStore();
   return (
     <section className="rounded-2xl border border-white/10 bg-black/5 p-4 dark:bg-white/5">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
@@ -10,13 +11,13 @@ export default function SearchBar({ onSearch }: { onSearch: () => void }) {
           className="rounded-xl bg-white/5 px-3 py-2 outline-none ring-1 ring-white/10"
           placeholder="Desde (OAX)"
           value={criteria.from}
-          onChange={(e) => setCriteria({ from: e.target.value.toUpperCase() })}
+          onChange={(e) => setCriteria({ from: normalizeAirportCode(e.target.value) })}
         />
         <input
           className="rounded-xl bg-white/5 px-3 py-2 outline-none ring-1 ring-white/10"
           placeholder="Hacia (MEX)"
           value={criteria.to}
-          onChange={(e) => setCriteria({ to: e.target.value.toUpperCase() })}
+          onChange={(e) => setCriteria({ to: normalizeAirportCode(e.target.value) })}
         />
         <input
           type="date"
@@ -46,8 +47,9 @@ export default function SearchBar({ onSearch }: { onSearch: () => void }) {
         </button>
       </div>
       <p className="mt-2 text-[11px] text-zinc-500">
-        * Demo: usa resultados de ejemplo del endpoint interno.
+        Busca paquetes reales cargados por el backend y crea una reserva demo para pasar a checkout.
       </p>
+      {searchError ? <p className="mt-2 text-xs text-red-300">{searchError}</p> : null}
     </section>
   );
 }

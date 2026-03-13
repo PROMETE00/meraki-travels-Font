@@ -1,21 +1,15 @@
-// lib/store.ts
 import { create } from "zustand";
-
-export type Criteria = {
-  from: string;
-  to: string;
-  dateFrom: string;
-  dateTo: string;
-  pax: number;
-};
+import type { SearchCriteria, SearchResultItem } from "@/features/search/types";
 
 type Store = {
-  criteria: Criteria;
-  setCriteria: (c: Partial<Criteria>) => void;
+  criteria: SearchCriteria;
+  setCriteria: (c: Partial<SearchCriteria>) => void;
   loading: boolean;
   setLoading: (v: boolean) => void;
-  results: any[];
-  setResults: (r: any[]) => void;
+  results: SearchResultItem[];
+  setResults: (r: SearchResultItem[]) => void;
+  searchError: string | null;
+  setSearchError: (value: string | null) => void;
 };
 
 export const useStore = create<Store>((set) => ({
@@ -25,4 +19,6 @@ export const useStore = create<Store>((set) => ({
   setLoading: (v) => set({ loading: v }),
   results: [],
   setResults: (r) => set({ results: r }),
+  searchError: null,
+  setSearchError: (value) => set({ searchError: value }),
 }));

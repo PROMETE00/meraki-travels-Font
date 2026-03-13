@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 import { useEffect, useMemo, useRef, useCallback } from "react";
 import { useGesture } from "@use-gesture/react";
 
@@ -34,6 +35,9 @@ type ItemDef = {
   sizeY: number;
 };
 
+type PointerKind = "mouse" | "pen" | "touch";
+type CssVarStyle = React.CSSProperties & Record<`--${string}`, string | number>;
+
 const DEFAULT_IMAGES: ImageItem[] = [
   { src: "https://images.unsplash.com/photo-1755331039789-7e5680e26e8f?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", alt: "Abstract art" },
   { src: "https://images.unsplash.com/photo-1755569309049-98410b94f66d?q=80&w=772&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", alt: "Modern sculpture" },
@@ -43,6 +47,7 @@ const DEFAULT_IMAGES: ImageItem[] = [
   { src: "https://images.unsplash.com/photo-1752588975228-21f44630bb3c?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", alt: "Textured surface" },
   { src: "https://pbs.twimg.com/media/Gyla7NnXMAAXSo_?format=jpg&name=large", alt: "Social media image" }
 ];
+
 
 const DEFAULTS = {
   maxVerticalRotationDeg: 5,
@@ -62,6 +67,13 @@ const getDataNumber = (el: HTMLElement, name: string, fallback: number) => {
   const attr = el.dataset[name] ?? el.getAttribute(`data-${name}`);
   const n = attr == null ? NaN : parseFloat(attr);
   return Number.isFinite(n) ? n : fallback;
+};
+
+const toPointerKind = (value: string | undefined): PointerKind => {
+  if (value === "pen" || value === "touch") {
+    return value;
+  }
+  return "mouse";
 };
 
 // Genera los items
@@ -373,7 +385,7 @@ export default function DomeGallery({
         stopInertia();
 
         const evt = event as PointerEvent;
-        pointerTypeRef.current = (evt.pointerType as any) || "mouse";
+        pointerTypeRef.current = toPointerKind(evt.pointerType);
         if (pointerTypeRef.current === "touch") evt.preventDefault();
         if (pointerTypeRef.current === "touch") lockScroll();
         draggingRef.current = true;
@@ -427,7 +439,7 @@ export default function DomeGallery({
             }
           }
 
-          let [vMagX, vMagY] = velArr;
+          const [vMagX, vMagY] = velArr;
           const [dirX, dirY] = dirArr;
           let vx = vMagX * dirX;
           let vy = vMagY * dirY;
@@ -481,7 +493,7 @@ export default function DomeGallery({
         parent.style.setProperty("--rot-y-delta", `0deg`);
         parent.style.setProperty("--rot-x-delta", `0deg`);
         el.style.visibility = "";
-        (el.style as any).zIndex = 0;
+        el.style.zIndex = "0";
         focusedElRef.current = null;
         rootRef.current?.removeAttribute("data-enlarging");
         openingRef.current = false;
@@ -558,7 +570,7 @@ export default function DomeGallery({
         requestAnimationFrame(() => {
           el.style.visibility = "";
           el.style.opacity = "0";
-          (el.style as any).zIndex = 0;
+          el.style.zIndex = "0";
           focusedElRef.current = null;
           rootRef.current?.removeAttribute("data-enlarging");
 
@@ -645,7 +657,7 @@ export default function DomeGallery({
       height: tileR.height
     };
     el.style.visibility = "hidden";
-    (el.style as any).zIndex = 0;
+    el.style.zIndex = "0";
     const overlay = document.createElement("div");
     overlay.className = "enlarge";
     overlay.style.cssText = `position:absolute; left:${frameR.left - mainR.left}px; top:${frameR.top - mainR.top}px; width:${frameR.width}px; height:${frameR.height}px; opacity:0; z-index:30; will-change:transform,opacity; transform-origin:top left; transition:transform ${enlargeTransitionMs}ms ease, opacity ${enlargeTransitionMs}ms ease; border-radius:${openedImageBorderRadius}; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.35);`;
@@ -797,6 +809,15 @@ export default function DomeGallery({
     }
   `;
 
+  const sphereRootStyle: CssVarStyle = {
+    "--segments-x": segments,
+    "--segments-y": segments,
+    "--overlay-blur-color": overlayBlurColor,
+    "--tile-radius": imageBorderRadius,
+    "--enlarge-radius": openedImageBorderRadius,
+    "--image-filter": grayscale ? "grayscale(1)" : "none",
+  };
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: cssStyles }} />
@@ -809,16 +830,7 @@ export default function DomeGallery({
           autoRotatePausedRef.current = false;
         }}
         className="sphere-root relative w-full h-full"
-        style={
-          {
-            ["--segments-x" as any]: segments,
-            ["--segments-y" as any]: segments,
-            ["--overlay-blur-color" as any]: overlayBlurColor,
-            ["--tile-radius" as any]: imageBorderRadius,
-            ["--enlarge-radius" as any]: openedImageBorderRadius,
-            ["--image-filter" as any]: grayscale ? "grayscale(1)" : "none"
-          } as React.CSSProperties
-        }
+        style={sphereRootStyle}
       >
         <main
           ref={mainRef}
@@ -830,7 +842,19 @@ export default function DomeGallery({
         >
           <div className="stage">
             <div ref={sphereRef} className="sphere">
-              {items.map((it, i) => (
+              {items.map((it, i) => {
+                const itemStyle: CssVarStyle = {
+                  "--offset-x": it.x,
+                  "--offset-y": it.y,
+                  "--item-size-x": it.sizeX,
+                  "--item-size-y": it.sizeY,
+                  top: "-999px",
+                  bottom: "-999px",
+                  left: "-999px",
+                  right: "-999px",
+                };
+
+                return (
                 <div
                   key={`${it.x},${it.y},${i}`}
                   className="sphere-item absolute m-auto"
@@ -840,18 +864,7 @@ export default function DomeGallery({
                   data-offset-y={it.y}
                   data-size-x={it.sizeX}
                   data-size-y={it.sizeY}
-                  style={
-                    {
-                      ["--offset-x" as any]: it.x,
-                      ["--offset-y" as any]: it.y,
-                      ["--item-size-x" as any]: it.sizeX,
-                      ["--item-size-y" as any]: it.sizeY,
-                      top: "-999px",
-                      bottom: "-999px",
-                      left: "-999px",
-                      right: "-999px"
-                    } as React.CSSProperties
-                  }
+                  style={itemStyle}
                 >
                   <div
                     className="item__image absolute block overflow-hidden cursor-pointer bg-gray-200 transition-transform duration-300"
@@ -891,7 +904,8 @@ export default function DomeGallery({
                     />
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

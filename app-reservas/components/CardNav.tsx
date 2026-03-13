@@ -1,11 +1,13 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
-import { gsap } from 'gsap';
+import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { gsap } from "gsap";
 // Icono para los enlaces de las tarjetas
-import { GoArrowUpRight } from 'react-icons/go';
+import { GoArrowUpRight } from "react-icons/go";
 // Icono de chevrón para abrir/cerrar el menú (sustituye al hamburguesa)
-import { FiChevronDown } from 'react-icons/fi';
+import { FiChevronDown } from "react-icons/fi";
 // Hook global para gestionar resultados y estado de carga
-import { useStore } from '@/lib/store';
+import { http } from "@/lib/http";
+import { useStore } from "@/lib/store";
+import type { SearchResponse } from "@/features/search/types";
 
 type CardNavLink = {
   label: string;
@@ -37,20 +39,19 @@ export interface CardNavProps {
  */
 const CardNav: React.FC<CardNavProps> = ({
   items,
-  className = '',
-  ease = 'power3.out',
-  baseColor = '#fff',
+  className = "",
+  ease = "power3.out",
   menuColor,
   buttonBgColor,
-  buttonTextColor
+  buttonTextColor,
 }) => {
   // Estado para la animación del menú
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   // Estado local del campo de búsqueda
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   // Accedemos al store global para gestionar resultados y estado de carga
-  const { setLoading, setResults, loading } = useStore();
+  const { setLoading, setResults, setSearchError } = useStore();
 
   const navRef = useRef<HTMLDivElement | null>(null);
   const cardsRef = useRef<HTMLDivElement[]>([]);
@@ -61,22 +62,22 @@ const CardNav: React.FC<CardNavProps> = ({
     const navEl = navRef.current;
     if (!navEl) return 260;
 
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
     if (isMobile) {
-      const contentEl = navEl.querySelector('.card-nav-content') as HTMLElement;
+      const contentEl = navEl.querySelector(".card-nav-content") as HTMLElement;
       if (contentEl) {
         const wasVisible = contentEl.style.visibility;
         const wasPointerEvents = contentEl.style.pointerEvents;
         const wasPosition = contentEl.style.position;
         const wasHeight = contentEl.style.height;
 
-        contentEl.style.visibility = 'visible';
-        contentEl.style.pointerEvents = 'auto';
-        contentEl.style.position = 'static';
-        contentEl.style.height = 'auto';
+        contentEl.style.visibility = "visible";
+        contentEl.style.pointerEvents = "auto";
+        contentEl.style.position = "static";
+        contentEl.style.height = "auto";
 
         // Force reflow
-        contentEl.offsetHeight;
+        void contentEl.offsetHeight;
 
         const topBar = 60;
         const padding = 16;
@@ -97,25 +98,28 @@ const CardNav: React.FC<CardNavProps> = ({
   // Envía la consulta del campo de búsqueda a la API y actualiza el store
   const handleSearch = async () => {
     if (!query.trim()) return;
+
     setLoading(true);
+    setSearchError(null);
+
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
+      const data = await http<SearchResponse>(`/api/search?q=${encodeURIComponent(query.trim())}`);
       setResults(data.items || []);
     } catch (err) {
       console.error(err);
       setResults([]);
+      setSearchError("No pudimos consultar paquetes desde la búsqueda rápida.");
     } finally {
       setLoading(false);
     }
   };
 
   // Crea el timeline de animaciones (igual que el original)
-  const createTimeline = () => {
+  const createTimeline = useCallback(() => {
     const navEl = navRef.current;
     if (!navEl) return null;
 
-    gsap.set(navEl, { height: 60, overflow: 'hidden' });
+    gsap.set(navEl, { height: 60, overflow: "hidden" });
     gsap.set(cardsRef.current, { y: 50, opacity: 0 });
 
     const tl = gsap.timeline({ paused: true });
@@ -123,13 +127,13 @@ const CardNav: React.FC<CardNavProps> = ({
     tl.to(navEl, {
       height: calculateHeight,
       duration: 0.4,
-      ease
+      ease,
     });
 
-    tl.to(cardsRef.current, { y: 0, opacity: 1, duration: 0.4, ease, stagger: 0.08 }, '-=0.1');
+    tl.to(cardsRef.current, { y: 0, opacity: 1, duration: 0.4, ease, stagger: 0.08 }, "-=0.1");
 
     return tl;
-  };
+  }, [ease]);
 
   useLayoutEffect(() => {
     const tl = createTimeline();
@@ -138,7 +142,7 @@ const CardNav: React.FC<CardNavProps> = ({
       tl?.kill();
       tlRef.current = null;
     };
-  }, [ease, items]);
+  }, [createTimeline, items]);
 
   // Recalcula alturas al hacer resize
   useLayoutEffect(() => {
@@ -161,9 +165,9 @@ const CardNav: React.FC<CardNavProps> = ({
         }
       }
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isExpanded]);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [createTimeline, isExpanded]);
 
   // Alterna la expansión del menú y la rotación del chevrón
   const toggleMenu = () => {
@@ -175,7 +179,7 @@ const CardNav: React.FC<CardNavProps> = ({
       tl.play(0);
     } else {
       setIsHamburgerOpen(false);
-      tl.eventCallback('onReverseComplete', () => setIsExpanded(false));
+      tl.eventCallback("onReverseComplete", () => setIsExpanded(false));
       tl.reverse();
     }
   };
@@ -187,25 +191,25 @@ const CardNav: React.FC<CardNavProps> = ({
 
   return (
     <div
-      className={`card-nav-container absolute left-1/2 -translate-x-1/2 w-[90%] max-w-[800px] z-[99] top-[1.2em] md:top-[2em] ${className}`}
+      className={`card-nav-container absolute left-1/2 -translate-x-1/2 w-[90%] max-w-[800px] z-[99]  ${className}`}
     >
       <nav
         ref={navRef}
-        className={`card-nav ${isExpanded ? 'open' : ''} block h-[60px] p-0 rounded-xl shadow-md relative overflow-hidden will-change-[height] border border-white/10 bg-white/10 backdrop-blur-md`}
+        className={`card-nav ${isExpanded ? "open" : ""} block h-[60px] p-0 rounded-xl shadow-md relative overflow-hidden border border-white/10 bg-white/10 backdrop-blur-md will-change-[height]`}
       >
-        <div className="card-nav-top absolute inset-x-0 top-0 h-[60px] flex items-center justify-between p-2 pl-[1.1rem] z-[2]">
+        <div className="px-1 mr-10 card-nav-top absolute inset-x-0 top-0 h-[60px] flex items-center justify-between p-2 pl-[1.1rem] z-[2]">
           <div
-            className={`hamburger-menu group h-full flex items-center justify-center cursor-pointer order-2 md:order-none transition-transform duration-300 ${isHamburgerOpen ? 'rotate-180' : ''}`}
+            className={`mr-4 hamburger-menu group order-2 flex h-full cursor-pointer items-center justify-center transition-transform duration-300 md:order-none ${isHamburgerOpen ? "rotate-180" : ""}`}
             onClick={toggleMenu}
             role="button"
-            aria-label={isExpanded ? 'Close menu' : 'Open menu'}
+            aria-label={isExpanded ? "Close menu" : "Open menu"}
             tabIndex={0}
-            style={{ color: menuColor || '#000' }}
+            style={{ color: menuColor || "#000" }}
           >
             <FiChevronDown size={24} aria-hidden="true" />
           </div>
           {/* Área de búsqueda integrada */}
-          <div className="mb-2 flex items-center gap-2 w-full md:w-[730px]">
+          <div className="mb-2 flex w-full items-center gap-2 md:w-[730px]">
             <input
               type="text"
               className="text-center flex-1 rounded-lg bg-white/10 px-3 py-2 text-sm outline-none ring-1 ring-white/15 placeholder-white/70 backdrop-blur-sm"
@@ -213,27 +217,28 @@ const CardNav: React.FC<CardNavProps> = ({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSearch();
+                if (e.key === "Enter") {
+                  void handleSearch();
+                }
               }}
             />
             <button
-              onClick={handleSearch}
-              disabled={loading}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60 backdrop-blur-sm"
+              type="button"
+              onClick={() => void handleSearch()}
+              className="rounded-lg px-3 py-2 text-xs font-medium text-white transition hover:bg-white/10"
+              style={{ backgroundColor: buttonBgColor || "#111", color: buttonTextColor || "#fff" }}
             >
-              {loading ? 'Buscando...' : 'Buscar'}
+              Buscar
             </button>
           </div>
         </div>
 
         <div
           className={`card-nav-content absolute left-0 right-0 top-[60px] bottom-0 p-2 flex flex-col items-stretch gap-2 justify-start z-[1] ${
-            isExpanded ? 'visible pointer-events-auto' : 'invisible pointer-events-none'
+            isExpanded ? "visible pointer-events-auto" : "invisible pointer-events-none"
           } md:flex-row md:items-end md:gap-[12px]`}
           aria-hidden={!isExpanded}
         >
-
-
           {(items || []).slice(0, 3).map((item, idx) => (
             <div
               key={`${item.label}-${idx}`}

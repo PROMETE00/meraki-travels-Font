@@ -8,6 +8,20 @@ export type ImageAsset = {
   is_cover?: boolean | null;
 };
 
+type NocoDbRow = {
+  id?: number | string;
+  owner_table?: string;
+  owner_id?: number | string;
+  path?: string;
+  alt_text?: string | null;
+  is_cover?: boolean | null;
+};
+
+type NocoDbListResponse = {
+  list?: NocoDbRow[];
+  rows?: NocoDbRow[];
+};
+
 const baseUrl  = process.env.NOCODB_BASE_URL!;
 const sharedId = process.env.NOCODB_SHARED_VIEW_ID || "";
 const svPwd    = process.env.NOCODB_SHARED_VIEW_PWD || ""; // opcional
@@ -36,8 +50,8 @@ export async function fetchImages(
   const res = await fetch(url.toString(), { cache: "no-store", headers });
   if (!res.ok) throw new Error(`NocoDB ${res.status}: ${await res.text()}`);
 
-  const data  = await res.json();
-  const rows: any[] = data?.list ?? data?.rows ?? data ?? [];
+  const data = (await res.json()) as NocoDbListResponse | NocoDbRow[];
+  const rows = Array.isArray(data) ? data : (data.list ?? data.rows ?? []);
   return rows.map((r) => ({
     id: Number(r.id),
     owner_table: String(r.owner_table),
