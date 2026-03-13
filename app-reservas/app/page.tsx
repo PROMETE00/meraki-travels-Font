@@ -110,7 +110,7 @@ export default function Home() {
 
       <Navbar />
 
-      <main className="mx-auto max-w-6xl px-4 pt-0 pb-12">
+      <main className="mx-auto max-w-6xl px-4 pt-0 pb-0">
         {/* Search Navigation */}
         <div className="mx-auto max-w-4xl px-9">
           <SearchNav topRem={0.75} onHeightChange={setNavH} />
@@ -319,6 +319,8 @@ export default function Home() {
           </div>
         </footer>
       </main>
+      {/* Fondo sólido para cubrir el carrusel */}
+      <div className="fixed inset-0 -z-20 bg-slate-50" />
     </div>
   );
 }
