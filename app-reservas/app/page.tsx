@@ -96,8 +96,8 @@ export default function Home() {
 
   return (
     <div className="relative">
-      {/* Background Carousel - sin indicadores */}
-      <div className="pointer-events-none fixed inset-0 -z-10">
+      {/* Background Carousel - fijo arriba */}
+      <div className="pointer-events-none fixed top-0 left-0 right-0 h-screen -z-10">
         <BannersBackgroundCarousel
           intervalMs={5000}
           transition="fade"
@@ -116,9 +116,9 @@ export default function Home() {
           <SearchNav topRem={0.75} onHeightChange={setNavH} />
         </div>
 
-        {/* Dome Gallery Section - fondo negro */}
+        {/* Dome Gallery Section */}
         <section
-          className={`relative left-1/2 right-1/2 -mx-[50vw] grid w-screen items-start justify-items-center overflow-hidden z-0 bg-black ${
+          className={`relative left-1/2 right-1/2 -mx-[50vw] grid w-screen items-start justify-items-center overflow-hidden z-0 ${
             expanded ? "pointer-events-none" : ""
           }`}
           style={domeStyle}
@@ -129,7 +129,7 @@ export default function Home() {
         </section>
 
         {/* Curved transition - media luna blanca */}
-        <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-black">
+        <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen">
           <div 
             className="h-24 w-full bg-white"
             style={{
