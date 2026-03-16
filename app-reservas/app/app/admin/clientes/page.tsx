@@ -1,8 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { AdminCustomerItem, AdminCustomerOverviewResponse, AuthRegisterRequest } from "@/features/search/types";
+import type {
+  AdminCustomerItem,
+  AdminCustomerOverviewResponse,
+  AdminCustomerUpdateRequest,
+  AuthRegisterRequest,
+} from "@/features/search/types";
 import { http, isHttpErrorStatus } from "@/lib/http";
 import { buildAuthHeaders, useSessionStore } from "@/lib/session-store";
 
@@ -24,9 +28,16 @@ export default function AdminClientesPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [overview, setOverview] = useState<AdminCustomerOverviewResponse | null>(null);
   const [roleDraft, setRoleDraft] = useState<"CUSTOMER" | "ADMIN" | "OPERATIONS">("CUSTOMER");
+  const [profileDraft, setProfileDraft] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    profileImageUrl: "",
+  });
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [savingRole, setSavingRole] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Create user modal state
@@ -96,6 +107,12 @@ export default function AdminClientesPage() {
         });
         setOverview(response);
         setRoleDraft(response.customer.role);
+        setProfileDraft({
+          fullName: response.customer.fullName ?? "",
+          email: response.customer.email ?? "",
+          phone: response.customer.phone ?? "",
+          profileImageUrl: response.customer.profileImageUrl ?? "",
+        });
       } catch (detailError) {
         console.error(detailError);
         if (isHttpErrorStatus(detailError, 401)) {
@@ -156,6 +173,51 @@ export default function AdminClientesPage() {
       }
     } finally {
       setSavingRole(false);
+    }
+  }
+
+  async function updateProfile() {
+    if (!token || !selectedId || !overview) {
+      return;
+    }
+    if (!profileDraft.fullName.trim() || !profileDraft.email.trim()) {
+      setError("Nombre y correo son obligatorios para guardar.");
+      return;
+    }
+
+    const payload: AdminCustomerUpdateRequest = {
+      fullName: profileDraft.fullName.trim(),
+      email: profileDraft.email.trim().toLowerCase(),
+      phone: profileDraft.phone.trim() || undefined,
+      profileImageUrl: profileDraft.profileImageUrl.trim() || undefined,
+    };
+
+    try {
+      setSavingProfile(true);
+      setError(null);
+      const updated = await http<AdminCustomerItem>(`/api/admin/customers/${selectedId}`, {
+        method: "PUT",
+        headers: buildAuthHeaders(token, { "Content-Type": "application/json" }),
+        body: JSON.stringify(payload),
+      });
+      setItems((current) => current.map((item) => (item.id === selectedId ? { ...item, ...updated } : item)));
+      setOverview((current) => (current ? { ...current, customer: { ...current.customer, ...updated } } : current));
+      setProfileDraft({
+        fullName: updated.fullName ?? "",
+        email: updated.email ?? "",
+        phone: updated.phone ?? "",
+        profileImageUrl: updated.profileImageUrl ?? "",
+      });
+    } catch (saveError) {
+      console.error(saveError);
+      if (isHttpErrorStatus(saveError, 401)) {
+        logout();
+        setError("Tu sesión expiró. Inicia sesión nuevamente para continuar.");
+      } else {
+        setError("No pudimos actualizar los datos del cliente.");
+      }
+    } finally {
+      setSavingProfile(false);
     }
   }
 
@@ -235,24 +297,21 @@ export default function AdminClientesPage() {
   }
 
   return (
-    <main className="space-y-6 p-6">
+    <main className="space-y-6 p-6 text-slate-900">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Admin · Clientes</h1>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-slate-600">
             Busca usuarios, revisa su contexto operativo y administra roles desde soporte.
           </p>
         </div>
 
-        <div className="flex gap-3">
-          <Link href="/app/admin" className="rounded-xl border border-white/10 px-4 py-2 text-sm transition hover:bg-white/10">
-            Dashboard
-          </Link>
+        <div className="flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
             disabled={!isAdmin}
-            className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2 text-sm font-semibold shadow-lg shadow-violet-500/20 transition hover:shadow-violet-500/30 disabled:opacity-60"
+            className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-60"
           >
             + Crear usuario
           </button>
@@ -260,7 +319,7 @@ export default function AdminClientesPage() {
             type="button"
             onClick={() => void loadCustomers()}
             disabled={!isAdmin}
-            className="rounded-xl bg-white/10 px-4 py-2 text-sm transition hover:bg-white/15 disabled:opacity-60"
+            className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-500 disabled:opacity-60"
           >
             Actualizar
           </button>
@@ -268,14 +327,14 @@ export default function AdminClientesPage() {
       </div>
 
       <section className="grid gap-6 xl:grid-cols-[360px_1fr]">
-        <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <label className="grid gap-2 text-sm">
             <span>Buscar cliente</span>
             <div className="flex gap-2">
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                className="flex-1 rounded-xl bg-black/20 px-3 py-2 outline-none ring-1 ring-white/10"
+                className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
                 placeholder="Nombre, email, teléfono o rol"
               />
               <button
@@ -289,25 +348,25 @@ export default function AdminClientesPage() {
             </div>
           </label>
 
-          {loading ? <div className="text-sm text-zinc-300">Cargando clientes...</div> : null}
-          {!loading && items.length === 0 ? <div className="text-sm text-zinc-400">No encontramos clientes con ese criterio.</div> : null}
+          {loading ? <div className="text-sm text-slate-600">Cargando clientes...</div> : null}
+          {!loading && items.length === 0 ? <div className="text-sm text-slate-500">No encontramos clientes con ese criterio.</div> : null}
 
-          <div className="grid gap-3">
+          <div className="grid max-h-[62vh] gap-3 overflow-auto pr-1">
             {items.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setSelectedId(item.id)}
                 className={`rounded-xl border p-4 text-left transition ${
-                  selectedId === item.id ? "border-cyan-400/40 bg-cyan-500/10" : "border-white/10 bg-black/20 hover:bg-white/5"
+                  selectedId === item.id ? "border-cyan-300 bg-cyan-50" : "border-slate-200 bg-white hover:border-teal-200 hover:bg-teal-50"
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <div className="font-medium">{item.fullName}</div>
-                  <span className="rounded-full bg-white/10 px-2 py-1 text-xs">{item.role}</span>
+                  <div className="font-medium text-slate-900">{item.fullName}</div>
+                  <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700">{item.role}</span>
                 </div>
-                <div className="mt-2 text-sm text-zinc-400">{item.email}</div>
-                <div className="mt-1 text-xs text-zinc-500">
+                <div className="mt-2 text-sm text-slate-600">{item.email}</div>
+                <div className="mt-1 text-xs text-slate-500">
                   {item.phone || "Sin teléfono"} · {formatDate(item.createdAt)}
                 </div>
               </button>
@@ -315,34 +374,75 @@ export default function AdminClientesPage() {
           </div>
         </div>
 
-        <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           {error ? <div className="rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
-          {!hydrated ? <div className="text-sm text-zinc-300">Cargando sesión...</div> : null}
-          {hydrated && !customer ? <div className="text-sm text-amber-100">Necesitas iniciar sesión.</div> : null}
-          {hydrated && customer && !isAdmin ? <div className="text-sm text-red-100">Tu cuenta no tiene permisos para este panel.</div> : null}
-          {hydrated && isAdmin && detailLoading ? <div className="text-sm text-zinc-300">Cargando overview del cliente...</div> : null}
+          {!hydrated ? <div className="text-sm text-slate-600">Cargando sesión...</div> : null}
+          {hydrated && !customer ? <div className="text-sm text-amber-700">Necesitas iniciar sesión.</div> : null}
+          {hydrated && customer && !isAdmin ? <div className="text-sm text-red-700">Tu cuenta no tiene permisos para este panel.</div> : null}
+          {hydrated && isAdmin && detailLoading ? <div className="text-sm text-slate-600">Cargando overview del cliente...</div> : null}
 
           {hydrated && isAdmin && !selectedCustomer ? (
-            <div className="text-sm text-zinc-400">Selecciona un cliente para ver su historial operativo.</div>
+            <div className="text-sm text-slate-500">Selecciona un cliente para ver su historial operativo.</div>
           ) : null}
 
           {overview ? (
             <>
-              <section className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
-                <div>
-                  <h2 className="text-xl font-semibold">{overview.customer.fullName}</h2>
-                  <div className="mt-2 text-sm text-zinc-300">{overview.customer.email}</div>
-                  <div className="mt-1 text-sm text-zinc-400">{overview.customer.phone || "Sin teléfono"}</div>
-                  <div className="mt-1 text-xs text-zinc-500">Alta: {formatDate(overview.customer.createdAt)}</div>
+              <section className="grid gap-4 xl:grid-cols-2">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <h2 className="text-lg font-semibold text-slate-900">Datos del cliente</h2>
+                  <div className="mt-4 grid gap-3">
+                    <label className="grid gap-1 text-sm">
+                      <span>Nombre completo</span>
+                      <input
+                        value={profileDraft.fullName}
+                        onChange={(event) => setProfileDraft((current) => ({ ...current, fullName: event.target.value }))}
+                        className="rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                      />
+                    </label>
+                    <label className="grid gap-1 text-sm">
+                      <span>Email</span>
+                      <input
+                        value={profileDraft.email}
+                        onChange={(event) => setProfileDraft((current) => ({ ...current, email: event.target.value }))}
+                        className="rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                      />
+                    </label>
+                    <label className="grid gap-1 text-sm">
+                      <span>Teléfono</span>
+                      <input
+                        value={profileDraft.phone}
+                        onChange={(event) => setProfileDraft((current) => ({ ...current, phone: event.target.value }))}
+                        className="rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                      />
+                    </label>
+                    <label className="grid gap-1 text-sm">
+                      <span>Foto perfil URL (opcional)</span>
+                      <input
+                        value={profileDraft.profileImageUrl}
+                        onChange={(event) => setProfileDraft((current) => ({ ...current, profileImageUrl: event.target.value }))}
+                        className="rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                      />
+                    </label>
+                    <div className="text-xs text-slate-500">Alta: {formatDate(overview.customer.createdAt)}</div>
+                    <button
+                      type="button"
+                      onClick={() => void updateProfile()}
+                      disabled={savingProfile}
+                      className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-500 disabled:opacity-60"
+                    >
+                      {savingProfile ? "Guardando..." : "Guardar datos"}
+                    </button>
+                  </div>
                 </div>
 
-                <div className="grid gap-2 rounded-xl border border-white/10 bg-black/20 p-4">
+                <div className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <h2 className="text-lg font-semibold text-slate-900">Rol y permisos</h2>
                   <label className="grid gap-2 text-sm">
                     <span>Rol</span>
                     <select
                       value={roleDraft}
                       onChange={(event) => setRoleDraft(event.target.value as "CUSTOMER" | "ADMIN" | "OPERATIONS")}
-                      className="rounded-xl bg-black/20 px-3 py-2 outline-none ring-1 ring-white/10"
+                      className="rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
                     >
                       <option value="CUSTOMER">CUSTOMER</option>
                       <option value="ADMIN">ADMIN</option>
@@ -353,7 +453,7 @@ export default function AdminClientesPage() {
                     type="button"
                     onClick={() => void updateRole()}
                     disabled={savingRole || roleDraft === overview.customer.role}
-                    className="rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold transition hover:bg-cyan-500 disabled:opacity-60"
+                    className="rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:opacity-60"
                   >
                     {savingRole ? "Guardando..." : "Guardar rol"}
                   </button>
@@ -367,43 +467,43 @@ export default function AdminClientesPage() {
               </section>
 
               <section className="grid gap-6 xl:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Reservas</h3>
-                    <span className="text-xs uppercase tracking-[0.18em] text-zinc-500">{overview.metrics.pendingBookings} pendientes</span>
+                    <span className="text-xs uppercase tracking-[0.18em] text-slate-500">{overview.metrics.pendingBookings} pendientes</span>
                   </div>
                   <div className="grid gap-3">
                     {overview.bookings.map((booking) => (
-                      <article key={booking.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                      <article key={booking.id} className="rounded-xl border border-slate-200 bg-white p-4">
                         <div className="flex items-center justify-between gap-3">
                           <div className="font-medium">{booking.packageTitle}</div>
-                          <span className="rounded-full bg-white/10 px-2 py-1 text-xs">{booking.status}</span>
+                          <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700">{booking.status}</span>
                         </div>
-                        <div className="mt-2 text-sm text-zinc-400">
+                        <div className="mt-2 text-sm text-slate-600">
                           {booking.originCode} → {booking.destinationCode} · {formatMoney(booking.totalPrice)}
                         </div>
-                        <div className="mt-1 text-xs text-zinc-500">{formatDate(booking.createdAt)}</div>
+                        <div className="mt-1 text-xs text-slate-500">{formatDate(booking.createdAt)}</div>
                       </article>
                     ))}
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Pagos</h3>
-                    <span className="text-xs uppercase tracking-[0.18em] text-zinc-500">{overview.metrics.refundedPayments} reembolsados</span>
+                    <span className="text-xs uppercase tracking-[0.18em] text-slate-500">{overview.metrics.refundedPayments} reembolsados</span>
                   </div>
                   <div className="grid gap-3">
                     {overview.payments.map((payment) => (
-                      <article key={payment.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                      <article key={payment.id} className="rounded-xl border border-slate-200 bg-white p-4">
                         <div className="flex items-center justify-between gap-3">
                           <div className="font-medium">{payment.packageTitle}</div>
-                          <span className="rounded-full bg-white/10 px-2 py-1 text-xs">{payment.status}</span>
+                          <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700">{payment.status}</span>
                         </div>
-                        <div className="mt-2 text-sm text-zinc-400">
+                        <div className="mt-2 text-sm text-slate-600">
                           {payment.provider} · {formatMoney(payment.amount)} · {payment.currency}
                         </div>
-                        <div className="mt-1 text-xs text-zinc-500">{formatDate(payment.createdAt)}</div>
+                        <div className="mt-1 text-xs text-slate-500">{formatDate(payment.createdAt)}</div>
                       </article>
                     ))}
                   </div>
@@ -557,10 +657,10 @@ export default function AdminClientesPage() {
 
 function MetricCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <article className="rounded-2xl border border-white/10 bg-black/20 p-4">
-      <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">{label}</div>
+    <article className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</div>
       <div className="mt-2 text-2xl font-bold">{value}</div>
-      <div className="mt-1 text-sm text-zinc-400">{detail}</div>
+      <div className="mt-1 text-sm text-slate-600">{detail}</div>
     </article>
   );
 }

@@ -3,16 +3,19 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import BannersBackgroundCarousel from "@/components/BannersBackgroundCarousel";
 import Navbar from "@/components/Navbar";
 import SearchNav from "@/components/ui/SearchNav";
 import AppDome from "@/components/AppDome";
+import WhatsAppWidget from "@/components/WhatsAppWidget";
 
 export default function Home() {
   const [navH, setNavH] = useState(0);
   const expanded = navH > 170;
   const [promotions, setPromotions] = useState<PromoBanner[]>([]);
   const [promosError, setPromosError] = useState<string | null>(null);
+  const [packages, setPackages] = useState<TravelPackage[]>([]);
 
   type PromoBanner = {
     id: number;
@@ -23,6 +26,17 @@ export default function Home() {
     imageUrl: string;
     orderIndex: number;
     isActive: boolean;
+  };
+
+  type TravelPackage = {
+    id: number;
+    title: string;
+    description: string | null;
+    originCode: string | null;
+    destinationCode: string | null;
+    basePrice: number;
+    coverImageUrl: string | null;
+    active: boolean;
   };
 
   useEffect(() => {
@@ -76,6 +90,33 @@ export default function Home() {
       active = false;
     };
   }, []);
+
+  // Cargar paquetes de viaje
+  useEffect(() => {
+    let active = true;
+    const loadPackages = async () => {
+      try {
+        const response = await fetch("/api/packages", { cache: "no-store" });
+        if (!response.ok) return;
+        const payload = (await response.json()) as TravelPackage[];
+        if (active) {
+          setPackages(payload.filter((pkg) => pkg.active).slice(0, 6));
+        }
+      } catch (error) {
+        console.error("Error loading packages:", error);
+      }
+    };
+    void loadPackages();
+    return () => { active = false; };
+  }, []);
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+      minimumFractionDigits: 0,
+    }).format(price);
+  };
 
 
   const domeStyle: React.CSSProperties = expanded
@@ -144,12 +185,12 @@ export default function Home() {
           <div className="mx-auto max-w-7xl px-6 py-24">
             {/* Section Header */}
             <div className="reveal space-y-4 text-center" data-animate="reveal">
-              <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-100 to-purple-100 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-violet-700">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-violet-500" />
+              <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-50 to-emerald-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-teal-700 ring-1 ring-teal-200">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-teal-500" />
                 Ofertas Exclusivas
               </span>
               <h2 className="text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">
-                Destinos <span className="bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">Imperdibles</span>
+                Destinos <span className="bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">Imperdibles</span>
               </h2>
               <p className="mx-auto max-w-2xl text-lg text-slate-600">
                 Descubre nuestras promociones especiales y vive experiencias únicas en los mejores destinos del mundo.
@@ -168,7 +209,7 @@ export default function Home() {
                 <Link
                   key={promo.id}
                   href={promo.linkUrl || "/paquetes"}
-                  className="group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-lg shadow-slate-200/50 ring-1 ring-slate-200/60 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-violet-200/30 hover:ring-violet-300"
+                  className="group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-lg shadow-slate-200/50 ring-1 ring-slate-200/60 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-teal-200/30 hover:ring-teal-300"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   {/* Image */}
@@ -190,7 +231,7 @@ export default function Home() {
 
                   {/* Content */}
                   <div className="flex flex-1 flex-col p-5">
-                    <h3 className="text-lg font-bold text-slate-900 transition-colors group-hover:text-violet-700">
+                    <h3 className="text-lg font-bold text-slate-900 transition-colors group-hover:text-teal-700">
                       {promo.title || "Promoción Especial"}
                     </h3>
                     <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">
@@ -202,7 +243,7 @@ export default function Home() {
                       <span className="text-xs font-medium text-slate-400">
                         Ver detalles
                       </span>
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-violet-600 transition-all group-hover:bg-violet-600 group-hover:text-white">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-50 text-teal-600 transition-all group-hover:bg-teal-600 group-hover:text-white">
                         <svg className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
@@ -215,8 +256,8 @@ export default function Home() {
 
             {!promotions.length && !promosError ? (
               <div className="mt-14 flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-8 py-16">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100">
-                  <svg className="h-8 w-8 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-100">
+                  <svg className="h-8 w-8 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                 </div>
@@ -231,15 +272,138 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Paquetes de Viaje - Tienda */}
+        <section className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-white">
+          <div className="mx-auto max-w-7xl px-6 py-24">
+            {/* Section Header */}
+            <div className="reveal flex flex-col items-center justify-between gap-6 md:flex-row" data-animate="reveal">
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-50 to-blue-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-sky-700 ring-1 ring-sky-200">
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  Tienda de Viajes
+                </span>
+                <h2 className="mt-4 text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">
+                  Paquetes <span className="bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">Recomendados</span>
+                </h2>
+                <p className="mt-3 max-w-xl text-lg text-slate-600">
+                  Experiencias completas diseñadas para hacer tu viaje inolvidable.
+                </p>
+              </div>
+              <Link
+                href="/paquetes"
+                className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:bg-slate-800 hover:shadow-xl"
+              >
+                Ver todos los paquetes
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+            </div>
+
+            {/* Packages Grid */}
+            <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {packages.map((pkg, index) => (
+                <Link
+                  key={pkg.id}
+                  href={`/viaje/${pkg.id}`}
+                  className="group relative flex flex-col overflow-hidden rounded-3xl bg-slate-50 ring-1 ring-slate-200/80 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-sky-200/40 hover:ring-sky-300"
+                  style={{ animationDelay: `${index * 80}ms` }}
+                >
+                  {/* Image */}
+                  <div className="relative aspect-[16/10] overflow-hidden bg-slate-200">
+                    {pkg.coverImageUrl ? (
+                      <img
+                        src={pkg.coverImageUrl}
+                        alt={pkg.title}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-sky-100 to-blue-100">
+                        <svg className="h-16 w-16 text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    )}
+                    
+                    {/* Price Badge */}
+                    <div className="absolute right-3 top-3 rounded-xl bg-white/95 px-3 py-1.5 shadow-lg backdrop-blur-sm">
+                      <span className="text-lg font-bold text-slate-900">{formatPrice(pkg.basePrice)}</span>
+                      <span className="ml-1 text-xs text-slate-500">MXN</span>
+                    </div>
+
+                    {/* Route Badge */}
+                    {pkg.originCode && pkg.destinationCode && (
+                      <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-slate-900/80 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
+                        <span>{pkg.originCode}</span>
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                        <span>{pkg.destinationCode}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex flex-1 flex-col p-5">
+                    <h3 className="text-xl font-bold text-slate-900 transition-colors group-hover:text-sky-700">
+                      {pkg.title}
+                    </h3>
+                    {pkg.description && (
+                      <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600 line-clamp-2">
+                        {pkg.description}
+                      </p>
+                    )}
+                    
+                    {/* CTA */}
+                    <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
+                      <div className="flex items-center gap-2 text-sm text-slate-500">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Reserva fácil</span>
+                      </div>
+                      <span className="inline-flex items-center gap-1 text-sm font-semibold text-sky-600 group-hover:text-sky-700">
+                        Reservar
+                        <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Empty State */}
+            {!packages.length && (
+              <div className="mt-14 flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-8 py-16">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-100">
+                  <svg className="h-8 w-8 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p className="mt-4 text-lg font-semibold text-slate-700">
+                  Próximamente más paquetes
+                </p>
+                <p className="mt-2 text-sm text-slate-500">
+                  Estamos preparando experiencias increíbles para ti.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* Why Choose Us Section */}
-        <section className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-gradient-to-br from-slate-900 via-slate-800 to-violet-900 text-white">
+        <section className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 text-white">
           <div className="mx-auto max-w-6xl px-6 py-24">
             <div className="reveal text-center" data-animate="reveal">
               <h2 className="text-3xl font-bold md:text-4xl">
                 ¿Por qué elegirnos?
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-slate-300">
-                Más de 10 años creando experiencias inolvidables para viajeros como tú.
+                Más de 40 años creando experiencias inolvidables para viajeros como tú.
               </p>
             </div>
 
@@ -252,7 +416,7 @@ export default function Home() {
               ].map((item, i) => (
                 <div
                   key={i}
-                  className="reveal group rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-violet-400/30 hover:bg-white/10"
+                  className="reveal group rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-teal-400/30 hover:bg-white/10"
                   data-animate="reveal"
                   style={{ transitionDelay: `${i * 100}ms` }}
                 >
@@ -278,7 +442,7 @@ export default function Home() {
               <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <Link
                   href="/app/acceder"
-                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 px-8 py-3.5 font-semibold text-white shadow-lg shadow-violet-500/30 transition-all hover:shadow-xl hover:shadow-violet-500/40"
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-600 to-emerald-600 px-8 py-3.5 font-semibold text-white shadow-lg shadow-teal-500/30 transition-all hover:shadow-xl hover:shadow-teal-500/40"
                 >
                   Comenzar ahora
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -287,7 +451,7 @@ export default function Home() {
                 </Link>
                 <Link
                   href="/paquetes"
-                  className="inline-flex items-center gap-2 rounded-full border-2 border-slate-200 px-8 py-3.5 font-semibold text-slate-700 transition-all hover:border-violet-300 hover:bg-violet-50"
+                  className="inline-flex items-center gap-2 rounded-full border-2 border-slate-200 px-8 py-3.5 font-semibold text-slate-700 transition-all hover:border-teal-300 hover:bg-teal-50"
                 >
                   Ver todos los paquetes
                 </Link>
@@ -301,16 +465,19 @@ export default function Home() {
           <div className="mx-auto max-w-6xl px-6 py-12">
             <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 text-lg font-bold text-white">
-                  M
-                </div>
-                <span className="text-lg font-bold text-slate-900">Meraki Travels</span>
+                <Image
+                  src="/meraki.svg"
+                  alt="Meraki Travels"
+                  width={140}
+                  height={48}
+                  className="h-10 w-auto"
+                />
               </div>
               <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-600">
-                <Link href="/paquetes" className="hover:text-violet-600">Paquetes</Link>
-                <Link href="/app/acceder" className="hover:text-violet-600">Mi cuenta</Link>
-                <a href="#" className="hover:text-violet-600">Términos</a>
-                <a href="#" className="hover:text-violet-600">Privacidad</a>
+                <Link href="/paquetes" className="hover:text-teal-600">Paquetes</Link>
+                <Link href="/app/acceder" className="hover:text-teal-600">Mi cuenta</Link>
+                <a href="#" className="hover:text-teal-600">Términos</a>
+                <a href="#" className="hover:text-teal-600">Privacidad</a>
               </div>
               <p className="text-sm text-slate-500">
                 © 2024 Meraki Travels. Todos los derechos reservados.
@@ -319,8 +486,12 @@ export default function Home() {
           </div>
         </footer>
       </main>
+      
       {/* Fondo sólido para cubrir el carrusel */}
       <div className="fixed inset-0 -z-20 bg-slate-50" />
+      
+      {/* WhatsApp Widget */}
+      <WhatsAppWidget />
     </div>
   );
 }

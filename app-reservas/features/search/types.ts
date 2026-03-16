@@ -65,6 +65,7 @@ export type PaymentHistoryItem = {
   originCode: string;
   destinationCode: string;
   provider: string;
+  paymentMethod?: string | null;
   amount: number;
   currency: string;
   status: string;
@@ -124,6 +125,7 @@ export type AdminCustomerItem = {
   fullName: string;
   email: string;
   phone: string | null;
+  profileImageUrl?: string | null;
   role: "CUSTOMER" | "ADMIN" | "OPERATIONS";
   createdAt: string;
 };
@@ -141,6 +143,13 @@ export type AdminCustomerOverviewResponse = {
   };
   bookings: BookingResponse[];
   payments: PaymentHistoryItem[];
+};
+
+export type AdminCustomerUpdateRequest = {
+  email: string;
+  fullName?: string;
+  phone?: string;
+  profileImageUrl?: string;
 };
 
 export type AdminIncidentTicketItem = {
@@ -197,6 +206,7 @@ export type CustomerSession = {
   fullName: string;
   email: string;
   phone: string | null;
+  profileImageUrl?: string | null;
   role: "CUSTOMER" | "ADMIN" | "OPERATIONS";
   createdAt: string;
 };
@@ -205,6 +215,7 @@ export type ProfileUpdateRequest = {
   email: string;
   fullName?: string;
   phone?: string;
+  profileImageUrl?: string;
 };
 
 export type AuthRegisterRequest = {
@@ -248,4 +259,60 @@ export type CustomerPreferencesRequest = {
   emergencyContactPhone?: string;
   specialNeeds?: string;
   notes?: string;
+};
+
+export type ImportantDocumentType =
+  | "PASSPORT"
+  | "VISA"
+  | "INSURANCE"
+  | "TICKET"
+  | "VOUCHER"
+  | "ITINERARY"
+  | "GUIDE"
+  | "FORM"
+  | "OTHER";
+
+export type ImportantDocumentCategory = "GENERAL" | "BOOKING_SPECIFIC";
+
+export type ImportantDocumentItem = {
+  id: number;
+  customerId: number;
+  customerName: string;
+  customerEmail: string;
+  assignedById: number | null;
+  assignedByName: string | null;
+  type: ImportantDocumentType;
+  category: ImportantDocumentCategory;
+  title: string;
+  description: string | null;
+  documentUrl: string;
+  fileName: string | null;
+  bookingId: number | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ImportantDocumentAuditEventItem = {
+  id: number;
+  documentId: number;
+  customerId: number;
+  actorId: number;
+  actorName: string;
+  action: "CREATED" | "UPDATED" | "REASSIGNED" | "STATUS_CHANGED" | "DELETED";
+  summary: string;
+  detailsJson: string | null;
+  createdAt: string;
+};
+
+export type AdminImportantDocumentRequest = {
+  customerId: number;
+  fileName?: string;
+  bookingId?: number | null;
+  type: ImportantDocumentType;
+  category: ImportantDocumentCategory;
+  title: string;
+  description?: string;
+  documentUrl: string;
+  active?: boolean;
 };

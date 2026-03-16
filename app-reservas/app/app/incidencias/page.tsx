@@ -5,27 +5,54 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CustomerIncidentTicketItem, IncidentTicketCommentItem } from "@/features/search/types";
 import { http, isHttpErrorStatus } from "@/lib/http";
 import { buildAuthHeaders, useSessionStore } from "@/lib/session-store";
+import { 
+  FaPlus,
+  FaExclamationCircle,
+  FaClock,
+  FaCheck,
+  FaLock,
+  FaComments,
+  FaUser,
+  FaCalendarAlt,
+  FaPaperPlane,
+  FaChevronDown,
+  FaChevronUp
+} from "react-icons/fa";
 
 const statusLabels: Record<string, string> = {
   ALL: "Todas",
   OPEN: "Abiertas",
-  IN_PROGRESS: "En progreso",
+  IN_PROGRESS: "En progreso", 
   RESOLVED: "Resueltas",
   CLOSED: "Cerradas",
 };
 
 const statusStyles: Record<string, string> = {
-  OPEN: "border-amber-400/30 bg-amber-500/10 text-amber-100",
-  IN_PROGRESS: "border-cyan-400/30 bg-cyan-500/10 text-cyan-100",
-  RESOLVED: "border-emerald-400/30 bg-emerald-500/10 text-emerald-100",
-  CLOSED: "border-zinc-500/30 bg-zinc-500/10 text-zinc-100",
+  OPEN: "border-amber-200 bg-amber-50 text-amber-700",
+  IN_PROGRESS: "border-blue-200 bg-blue-50 text-blue-700",
+  RESOLVED: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  CLOSED: "border-slate-200 bg-slate-50 text-slate-700",
+};
+
+const statusIcons: Record<string, React.ReactNode> = {
+  OPEN: <FaExclamationCircle className="h-4 w-4" />,
+  IN_PROGRESS: <FaClock className="h-4 w-4" />,
+  RESOLVED: <FaCheck className="h-4 w-4" />,
+  CLOSED: <FaLock className="h-4 w-4" />,
 };
 
 const priorityLabels: Record<string, string> = {
   LOW: "Baja",
-  MEDIUM: "Media",
+  MEDIUM: "Media", 
   HIGH: "Alta",
   URGENT: "Urgente",
+};
+
+const priorityStyles: Record<string, string> = {
+  LOW: "text-green-600 bg-green-100",
+  MEDIUM: "text-yellow-600 bg-yellow-100",
+  HIGH: "text-orange-600 bg-orange-100", 
+  URGENT: "text-red-600 bg-red-100",
 };
 
 function formatDate(date: string | null) {
@@ -44,6 +71,16 @@ export default function CustomerIncidenciasPage() {
   const [postingCommentId, setPostingCommentId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [expandedTickets, setExpandedTickets] = useState<Set<number>>(new Set());
+  
+  // New ticket form
+  const [newTicket, setNewTicket] = useState({
+    subject: "",
+    description: "",
+    priority: "MEDIUM" as "LOW" | "MEDIUM" | "HIGH" | "URGENT"
+  });
+  const [creatingTicket, setCreatingTicket] = useState(false);
 
   const loadTickets = useCallback(async () => {
     if (!customer || !token) {
@@ -59,322 +96,404 @@ export default function CustomerIncidenciasPage() {
         headers: buildAuthHeaders(token),
       });
       setTickets(response);
-    } catch (loadError) {
-      console.error(loadError);
-      if (isHttpErrorStatus(loadError, 401)) {
+    } catch (err) {
+      console.error("Error loading tickets:", err);
+      if (isHttpErrorStatus(err, 401)) {
         logout();
-        setError("Tu sesión expiró. Inicia sesión nuevamente para consultar incidencias.");
-      } else {
-        setError("No pudimos cargar tus incidencias.");
+        return;
       }
+      setError("Error al cargar las incidencias. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
-  }, [customer, logout, token]);
+  }, [customer, token, logout]);
 
-  useEffect(() => {
-    if (!hydrated) return;
-    void loadTickets();
-  }, [hydrated, loadTickets]);
-
-  const filteredTickets = useMemo(() => {
-    const base = [...tickets].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-    if (statusFilter === "ALL") {
-      return base;
+  const createTicket = useCallback(async () => {
+    if (!newTicket.subject.trim() || !newTicket.description.trim()) {
+      setError("El asunto y la descripción son requeridos");
+      return;
     }
-    return base.filter((ticket) => ticket.status === statusFilter);
-  }, [statusFilter, tickets]);
 
-  const metrics = useMemo(() => {
-    const open = tickets.filter((ticket) => ticket.status === "OPEN").length;
-    const inProgress = tickets.filter((ticket) => ticket.status === "IN_PROGRESS").length;
-    const resolved = tickets.filter((ticket) => ticket.status === "RESOLVED").length;
-    const lastUpdated = tickets.length ? tickets.slice().sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0]?.updatedAt ?? null : null;
-    return { open, inProgress, resolved, lastUpdated };
-  }, [tickets]);
-
-  async function loadComments(ticketId: number) {
-    if (!token) return;
+    setCreatingTicket(true);
+    setError(null);
 
     try {
-      setLoadingCommentsId(ticketId);
-      setError(null);
-      const response = await http<IncidentTicketCommentItem[]>(`/api/tickets/${ticketId}/comments`, {
-        headers: buildAuthHeaders(token),
+      await http("/api/tickets", {
+        method: "POST",
+        headers: buildAuthHeaders(token!),
+        body: JSON.stringify(newTicket),
       });
-      setCommentsByTicket((current) => ({ ...current, [ticketId]: response }));
-    } catch (loadError) {
-      console.error(loadError);
-      setError("No pudimos cargar la conversación de la incidencia.");
+      
+      setMessage("Incidencia creada exitosamente");
+      setNewTicket({ subject: "", description: "", priority: "MEDIUM" });
+      setShowCreateForm(false);
+      loadTickets();
+    } catch (err) {
+      console.error("Error creating ticket:", err);
+      setError("Error al crear la incidencia. Inténtalo de nuevo.");
+    } finally {
+      setCreatingTicket(false);
+    }
+  }, [newTicket, token, loadTickets]);
+
+  const loadComments = useCallback(async (ticketId: number) => {
+    if (loadingCommentsId === ticketId) return;
+    
+    setLoadingCommentsId(ticketId);
+    try {
+      const response = await http<IncidentTicketCommentItem[]>(`/api/tickets/${ticketId}/comments`, {
+        headers: buildAuthHeaders(token!),
+      });
+      setCommentsByTicket(prev => ({ ...prev, [ticketId]: response }));
+    } catch (err) {
+      console.error("Error loading comments:", err);
     } finally {
       setLoadingCommentsId(null);
     }
-  }
+  }, [token, loadingCommentsId]);
 
-  async function submitComment(ticketId: number) {
-    if (!token) return;
-    const draft = commentDrafts[ticketId] ?? "";
-    const messageDraft = draft.trim();
-    if (!messageDraft) return;
+  const addComment = useCallback(async (ticketId: number) => {
+    const comment = commentDrafts[ticketId]?.trim();
+    if (!comment) return;
 
+    setPostingCommentId(ticketId);
     try {
-      setPostingCommentId(ticketId);
-      setError(null);
-      setMessage(null);
-      const created = await http<IncidentTicketCommentItem>(`/api/tickets/${ticketId}/comments`, {
+      await http(`/api/tickets/${ticketId}/comments`, {
         method: "POST",
-        headers: buildAuthHeaders(token, { "Content-Type": "application/json" }),
-        body: JSON.stringify({ message: messageDraft }),
+        headers: buildAuthHeaders(token!),
+        body: JSON.stringify({ comment }),
       });
-      setCommentsByTicket((current) => ({
-        ...current,
-        [ticketId]: [...(current[ticketId] ?? []), created],
-      }));
-      setCommentDrafts((current) => ({ ...current, [ticketId]: "" }));
-      await loadTickets();
-      setMessage(`Tu comentario se agregó a la incidencia #${ticketId}.`);
-    } catch (submitError) {
-      console.error(submitError);
-      if (isHttpErrorStatus(submitError, 401)) {
-        logout();
-        setError("Tu sesión expiró. Inicia sesión nuevamente para responder la incidencia.");
-      } else {
-        setError("No pudimos enviar tu comentario.");
-      }
+      
+      setCommentDrafts(prev => ({ ...prev, [ticketId]: "" }));
+      loadComments(ticketId);
+    } catch (err) {
+      console.error("Error adding comment:", err);
+      setError("Error al agregar el comentario");
     } finally {
       setPostingCommentId(null);
     }
-  }
+  }, [commentDrafts, token, loadComments]);
 
-  async function copyText(value: string, label: string) {
-    try {
-      await navigator.clipboard.writeText(value);
-      setMessage(`${label} copiado.`);
-    } catch (copyError) {
-      console.error(copyError);
-      setError(`No pudimos copiar ${label.toLowerCase()}.`);
+  useEffect(() => {
+    if (hydrated) {
+      loadTickets();
     }
-  }
+  }, [hydrated, loadTickets]);
 
-  return (
-    <main className="space-y-6 p-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Incidencias</h1>
-          <p className="text-sm text-zinc-400">Da seguimiento a tickets abiertos con operaciones y responde desde tu sesión.</p>
-        </div>
+  const filteredTickets = useMemo(() => {
+    if (statusFilter === "ALL") return tickets;
+    return tickets.filter(t => t.status === statusFilter);
+  }, [tickets, statusFilter]);
 
-        <div className="flex gap-3">
-          <Link href="/app/reservas" className="rounded-xl border border-white/10 px-4 py-2 text-sm transition hover:bg-white/10">
-            Ver reservas
-          </Link>
-          <button
-            type="button"
-            onClick={() => void loadTickets()}
-            disabled={!customer}
-            className="rounded-xl bg-white/10 px-4 py-2 text-sm transition hover:bg-white/15 disabled:opacity-60"
-          >
-            Actualizar
-          </button>
-        </div>
-      </div>
-
-      {message ? <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">{message}</div> : null}
-      {error ? <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
-      {!hydrated ? <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-zinc-300">Cargando sesión...</div> : null}
-      {hydrated && !customer ? (
-        <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-6 text-sm text-amber-100">
-          Necesitas iniciar sesión para revisar tus incidencias.
-        </div>
-      ) : null}
-      {hydrated && customer && loading ? <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-zinc-300">Cargando incidencias...</div> : null}
-
-      {hydrated && customer ? (
-        <>
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Abiertas" value={String(metrics.open)} detail="requieren atención" accent={metrics.open > 0 ? "amber" : "neutral"} />
-            <MetricCard label="En progreso" value={String(metrics.inProgress)} detail="seguimiento activo" accent={metrics.inProgress > 0 ? "cyan" : "neutral"} />
-            <MetricCard label="Resueltas" value={String(metrics.resolved)} detail="ya atendidas" accent={metrics.resolved > 0 ? "emerald" : "neutral"} />
-            <MetricCard label="Último movimiento" value={metrics.lastUpdated ? formatDate(metrics.lastUpdated) : "Sin actividad"} detail={`${tickets.length} tickets totales`} />
-          </section>
-
-          <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="flex flex-wrap gap-2">
-              {(["ALL", "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"] as const).map((status) => {
-                const active = statusFilter === status;
-                return (
-                  <button
-                    key={status}
-                    type="button"
-                    onClick={() => setStatusFilter(status)}
-                    className={`rounded-full px-4 py-2 text-sm transition ${active ? "bg-cyan-500 text-white" : "border border-white/10 bg-black/20 text-zinc-300 hover:bg-white/10"}`}
-                  >
-                    {statusLabels[status]}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        </>
-      ) : null}
-
-      {hydrated && customer && !loading && !filteredTickets.length ? (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-zinc-300">
-          No hay incidencias para el filtro seleccionado. Cambia de estado o espera nuevos movimientos de soporte.
-        </div>
-      ) : null}
-
-      <div className="grid gap-4">
-        {filteredTickets.map((ticket) => {
-          const comments = commentsByTicket[ticket.id];
-          const commentDraft = commentDrafts[ticket.id] ?? "";
-          return (
-            <article key={ticket.id} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <div className="space-y-3 xl:max-w-[38rem]">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-xs text-zinc-300">Ticket #{ticket.id}</span>
-                    <button type="button" onClick={() => void copyText(String(ticket.id), `Ticket #${ticket.id}`)} className="text-xs text-zinc-400 underline underline-offset-2 hover:text-white">
-                      Copiar folio
-                    </button>
-                    <span className={`rounded-full border px-2 py-1 text-xs ${statusStyles[ticket.status] ?? "border-white/10 bg-white/10 text-white"}`}>
-                      {statusLabels[ticket.status] ?? ticket.status}
-                    </span>
-                    <span className="rounded-full bg-white/10 px-2 py-1 text-xs">{priorityLabels[ticket.priority] ?? ticket.priority}</span>
-                  </div>
-
-                  <div>
-                    <h2 className="text-lg font-semibold">{ticket.title}</h2>
-                    <div className="mt-1 text-sm text-zinc-400">Creada {formatDate(ticket.createdAt)} · actualizada {formatDate(ticket.updatedAt)}</div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-zinc-300">
-                    {ticket.description}
-                  </div>
-
-                  <div className="grid gap-2 text-sm text-zinc-400">
-                    {ticket.bookingId ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span>Reserva #{ticket.bookingId} · {ticket.packageTitle} · {ticket.bookingStatus}</span>
-                        <button type="button" onClick={() => void copyText(String(ticket.bookingId), `Reserva #${ticket.bookingId}`)} className="text-xs underline underline-offset-2 hover:text-white">
-                          Copiar referencia
-                        </button>
-                      </div>
-                    ) : (
-                      <div>Sin reserva vinculada.</div>
-                    )}
-                  </div>
-
-                  {ticket.resolutionNote ? (
-                    <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">
-                      Resolución actual: {ticket.resolutionNote}
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="xl:min-w-[440px] xl:max-w-[440px] rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div>
-                      <div className="font-medium">Conversación</div>
-                      <p className="text-xs text-zinc-400">Comparte más detalle con operaciones o revisa respuestas recientes.</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => void loadComments(ticket.id)}
-                      disabled={loadingCommentsId === ticket.id}
-                      className="rounded-xl border border-white/10 px-3 py-2 text-xs transition hover:bg-white/10 disabled:opacity-60"
-                    >
-                      {loadingCommentsId === ticket.id ? "Cargando..." : comments ? "Actualizar" : "Cargar"}
-                    </button>
-                  </div>
-
-                  {comments?.length ? (
-                    <div className="space-y-3">
-                      {comments.map((comment) => (
-                        <CommentBubble key={comment.id} comment={comment} />
-                      ))}
-                    </div>
-                  ) : comments ? (
-                    <div className="text-sm text-zinc-400">Todavía no hay comentarios en esta incidencia.</div>
-                  ) : (
-                    <div className="text-sm text-zinc-500">Carga la conversación para revisar el intercambio completo.</div>
-                  )}
-
-                  <div className="mt-3 grid gap-2">
-                    <textarea
-                      value={commentDraft}
-                      onChange={(event) =>
-                        setCommentDrafts((current) => ({
-                          ...current,
-                          [ticket.id]: event.target.value,
-                        }))
-                      }
-                      maxLength={500}
-                      className="min-h-24 rounded-xl bg-black/20 px-3 py-2 outline-none ring-1 ring-white/10"
-                      placeholder="Escribe aquí tu mensaje para operaciones"
-                    />
-                    <div className="flex items-center justify-between text-xs text-zinc-500">
-                      <span>Tu mensaje será visible para operaciones.</span>
-                      <span>{commentDraft.length}/500</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => void submitComment(ticket.id)}
-                      disabled={postingCommentId === ticket.id || !commentDraft.trim()}
-                      className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-100 transition hover:bg-emerald-500/20 disabled:opacity-60"
-                    >
-                      {postingCommentId === ticket.id ? "Enviando..." : "Enviar comentario"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </article>
-          );
-        })}
-      </div>
-    </main>
-  );
-}
-
-function MetricCard({
-  label,
-  value,
-  detail,
-  accent = "neutral",
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  accent?: "neutral" | "amber" | "cyan" | "emerald";
-}) {
-  const styles: Record<string, string> = {
-    neutral: "border-white/10 bg-white/5",
-    amber: "border-amber-400/30 bg-amber-500/10",
-    cyan: "border-cyan-400/30 bg-cyan-500/10",
-    emerald: "border-emerald-400/30 bg-emerald-500/10",
+  const toggleTicketExpansion = (ticketId: number) => {
+    const newExpanded = new Set(expandedTickets);
+    if (newExpanded.has(ticketId)) {
+      newExpanded.delete(ticketId);
+    } else {
+      newExpanded.add(ticketId);
+      if (!commentsByTicket[ticketId]) {
+        loadComments(ticketId);
+      }
+    }
+    setExpandedTickets(newExpanded);
   };
 
   return (
-    <article className={`rounded-2xl border p-5 ${styles[accent]}`}>
-      <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">{label}</div>
-      <div className="mt-3 text-xl font-bold">{value}</div>
-      <div className="mt-2 text-sm text-zinc-400">{detail}</div>
-    </article>
-  );
-}
+    <main className="space-y-8">
+      {/* Header */}
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-800">Mis incidencias</h1>
+          <p className="text-slate-600">
+            Reporta problemas, haz preguntas y da seguimiento a tus solicitudes.
+          </p>
+        </div>
 
-function CommentBubble({ comment }: { comment: IncidentTicketCommentItem }) {
-  const isAdmin = comment.actor === "ADMIN";
-  return (
-    <div className={`rounded-xl border p-3 ${isAdmin ? "border-cyan-400/20 bg-cyan-500/10" : "border-emerald-400/20 bg-emerald-500/10"}`}>
-      <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-300">
-        <span className={`rounded-full px-2 py-1 ${isAdmin ? "bg-cyan-500/20 text-cyan-100" : "bg-emerald-500/20 text-emerald-100"}`}>
-          {isAdmin ? "Operaciones" : "Tú"}
-        </span>
-        <span>{comment.authorName}</span>
-        <span className="text-zinc-500">{formatDate(comment.createdAt)}</span>
+        {/* Create New Button */}
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-700"
+          >
+            <FaPlus className="h-4 w-4" />
+            Nueva incidencia
+          </button>
+
+          {/* Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+          >
+            {Object.entries(statusLabels).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+        </div>
       </div>
-      <div className="mt-2 whitespace-pre-wrap text-sm text-zinc-100">{comment.message}</div>
-    </div>
+
+      {/* Messages */}
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error}
+        </div>
+      )}
+      {message && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          {message}
+        </div>
+      )}
+
+      {/* Create Form */}
+      {showCreateForm && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-800 mb-4">Crear nueva incidencia</h3>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Asunto *
+              </label>
+              <input
+                type="text"
+                value={newTicket.subject}
+                onChange={(e) => setNewTicket(prev => ({ ...prev, subject: e.target.value }))}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                placeholder="Describe brevemente tu problema"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Prioridad
+              </label>
+              <select
+                value={newTicket.priority}
+                onChange={(e) => setNewTicket(prev => ({ ...prev, priority: e.target.value as any }))}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              >
+                {Object.entries(priorityLabels).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Descripción *
+              </label>
+              <textarea
+                value={newTicket.description}
+                onChange={(e) => setNewTicket(prev => ({ ...prev, description: e.target.value }))}
+                rows={4}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                placeholder="Explica detalladamente el problema o tu solicitud"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={createTicket}
+                disabled={creatingTicket}
+                className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-700 disabled:opacity-50"
+              >
+                {creatingTicket ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <FaPlus className="h-4 w-4" />
+                )}
+                {creatingTicket ? "Creando..." : "Crear incidencia"}
+              </button>
+              <button
+                onClick={() => setShowCreateForm(false)}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
+            <p className="mt-3 text-sm text-slate-600">Cargando incidencias...</p>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Not Logged In State */}
+      {hydrated && !customer ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
+            <FaUser className="h-8 w-8 text-amber-600" />
+          </div>
+          <h3 className="mt-4 text-xl font-semibold text-amber-800">Inicia sesión para ver tus incidencias</h3>
+          <p className="mt-2 text-amber-700">
+            Accede a tu cuenta para reportar problemas y dar seguimiento a tus solicitudes.
+          </p>
+          <Link
+            href="/app/acceder"
+            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-amber-600 px-6 py-3 font-medium text-white transition-colors hover:bg-amber-700"
+          >
+            Iniciar sesión
+          </Link>
+        </div>
+      ) : null}
+
+      {/* Empty State */}
+      {hydrated && customer && !loading && !filteredTickets.length ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-teal-100">
+            <FaComments className="h-10 w-10 text-teal-600" />
+          </div>
+          <h3 className="mt-6 text-2xl font-semibold text-slate-800">
+            {statusFilter === "ALL" ? "No tienes incidencias" : `No tienes incidencias ${statusLabels[statusFilter].toLowerCase()}`}
+          </h3>
+          <p className="mt-2 text-slate-600 max-w-md mx-auto">
+            {statusFilter === "ALL" 
+              ? "¿Tienes algún problema o pregunta? Crea una nueva incidencia y nuestro equipo te ayudará." 
+              : `No hay incidencias con estado "${statusLabels[statusFilter].toLowerCase()}" en este momento.`
+            }
+          </p>
+          <div className="mt-8">
+            {statusFilter === "ALL" ? (
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-6 py-3 font-medium text-white transition-colors hover:bg-teal-700"
+              >
+                <FaPlus className="h-5 w-5" />
+                Crear primera incidencia
+              </button>
+            ) : (
+              <button
+                onClick={() => setStatusFilter("ALL")}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-6 py-3 font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                Ver todas las incidencias
+              </button>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Tickets List */}
+      {hydrated && customer && !loading && filteredTickets.length > 0 ? (
+        <div className="space-y-4">
+          {filteredTickets.map((ticket) => {
+            const isExpanded = expandedTickets.has(ticket.id);
+            const comments = commentsByTicket[ticket.id] || [];
+            
+            return (
+              <div key={ticket.id} className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                {/* Header */}
+                <div className="border-b border-slate-100 px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${statusStyles[ticket.status]}`}>
+                        {statusIcons[ticket.status]}
+                        {statusLabels[ticket.status]}
+                      </span>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${priorityStyles[ticket.priority]}`}>
+                        {priorityLabels[ticket.priority]}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => toggleTicketExpansion(ticket.id)}
+                      className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700"
+                    >
+                      <span>#{ticket.id}</span>
+                      {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-6">
+                  {/* Ticket Info */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-800">{ticket.title}</h3>
+                    <div className="mt-2 flex items-center gap-4 text-sm text-slate-600">
+                      <div className="flex items-center gap-1">
+                        <FaCalendarAlt className="h-4 w-4" />
+                        {formatDate(ticket.createdAt)}
+                      </div>
+                      {ticket.updatedAt && (
+                        <div>Actualizado: {formatDate(ticket.updatedAt)}</div>
+                      )}
+                    </div>
+                    {isExpanded && (
+                      <p className="mt-4 text-slate-700">{ticket.description}</p>
+                    )}
+                  </div>
+
+                  {/* Comments Section */}
+                  {isExpanded && (
+                    <div className="mt-6 border-t border-slate-100 pt-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <FaComments className="h-4 w-4 text-slate-600" />
+                        <span className="text-sm font-medium text-slate-700">
+                          Comentarios ({comments.length})
+                        </span>
+                      </div>
+
+                      {/* Comments List */}
+                      {loadingCommentsId === ticket.id ? (
+                        <div className="flex items-center gap-2 py-4 text-sm text-slate-600">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
+                          Cargando comentarios...
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {comments.map((comment) => (
+                            <div key={comment.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-slate-700">
+                                  {comment.actor === "CUSTOMER" ? "Tú" : "Soporte"}
+                                </span>
+                                <span className="text-xs text-slate-500">
+                                  {formatDate(comment.createdAt)}
+                                </span>
+                              </div>
+                              <p className="text-sm text-slate-700">{comment.message}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Add Comment */}
+                      {ticket.status !== "CLOSED" && (
+                        <div className="mt-4 flex gap-3">
+                          <input
+                            type="text"
+                            value={commentDrafts[ticket.id] || ""}
+                            onChange={(e) => setCommentDrafts(prev => ({ ...prev, [ticket.id]: e.target.value }))}
+                            placeholder="Escribe un comentario..."
+                            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                          />
+                          <button
+                            onClick={() => addComment(ticket.id)}
+                            disabled={postingCommentId === ticket.id || !commentDrafts[ticket.id]?.trim()}
+                            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-700 disabled:opacity-50"
+                          >
+                            {postingCommentId === ticket.id ? (
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            ) : (
+                              <FaPaperPlane className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </main>
   );
 }

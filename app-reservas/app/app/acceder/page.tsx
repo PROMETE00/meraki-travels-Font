@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { http } from "@/lib/http";
 import { useSessionStore } from "@/lib/session-store";
 import type { AuthLoginRequest, AuthRegisterRequest, AuthResponse } from "@/features/search/types";
@@ -10,7 +11,7 @@ import type { AuthLoginRequest, AuthRegisterRequest, AuthResponse } from "@/feat
 export default function AccederPage() {
   const router = useRouter();
   const { customer, setSession, hydrated } = useSessionStore();
-  const [step, setStep] = useState<"welcome" | "login" | "register">("welcome");
+  const [step, setStep] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -18,6 +19,7 @@ export default function AccederPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -48,16 +50,10 @@ export default function AccederPage() {
       });
 
       setSession(response.token, response.customer);
-
-      // Redirect based on role
-      if (response.customer.role === "ADMIN" || response.customer.role === "OPERATIONS") {
-        router.push("/app/admin");
-      } else {
-        router.push("/app");
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Credenciales incorrectas. Verifica tu email y contraseña.");
+      router.push("/app");
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err.message || "Credenciales incorrectas. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -65,7 +61,7 @@ export default function AccederPage() {
 
   async function handleRegister() {
     if (!fullName.trim() || !email.trim() || !password) {
-      setError("Por favor completa nombre, email y contraseña");
+      setError("Por favor completa los campos obligatorios");
       return;
     }
 
@@ -93,9 +89,9 @@ export default function AccederPage() {
 
       setSession(response.token, response.customer);
       router.push("/app");
-    } catch (err) {
-      console.error(err);
-      setError("No pudimos crear tu cuenta. Verifica que el email no esté registrado.");
+    } catch (err: any) {
+      console.error("Register error:", err);
+      setError(err.message || "Error al crear cuenta. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -118,9 +114,9 @@ export default function AccederPage() {
 
   if (!hydrated) {
     return (
-      <main className="flex min-h-[80vh] items-center justify-center p-6">
-        <div className="animate-pulse text-zinc-400">Cargando...</div>
-      </main>
+      <div className="flex min-h-screen items-center justify-center bg-slate-100">
+        <div className="animate-pulse text-slate-400">Cargando...</div>
+      </div>
     );
   }
 
@@ -129,447 +125,242 @@ export default function AccederPage() {
   }
 
   return (
-    <main className="flex min-h-[80vh] items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        {/* Logo/Brand */}
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-3xl shadow-lg shadow-violet-500/20">
-            ✈️
+    <div className="min-h-screen bg-slate-100 grid place-items-center p-4">
+      {/* Main Container - inspirado en kiosco */}
+      <main className="w-full max-w-6xl min-h-[640px] bg-white border border-slate-200/60 rounded-3xl shadow-2xl shadow-slate-200/50 overflow-hidden grid grid-cols-1 lg:grid-cols-[1fr_1.2fr]">
+        
+        {/* Left Panel - Form */}
+        <section className="p-12 lg:p-16 flex flex-col justify-center" aria-label="Inicio de sesión">
+          {/* Brand */}
+          <div className="mb-8 flex items-center justify-between gap-3">
+            <Link
+              href="/"
+              aria-label="Ir al inicio"
+              className="inline-flex items-center"
+            >
+              <Image
+                src="/meraki.svg"
+                alt="Meraki Travels"
+                width={140}
+                height={44}
+                priority
+                className="h-10 w-auto"
+              />
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Regresar al inicio
+            </Link>
           </div>
-          <h1 className="text-2xl font-bold text-white">Meraki Travels</h1>
-          <p className="mt-1 text-sm text-zinc-400">Tu próxima aventura comienza aquí</p>
-        </div>
 
-        {/* Card */}
-        <div 
-          className={`
-            rounded-3xl border border-white/10 bg-gradient-to-b from-white/10 to-white/5 
-            p-8 shadow-2xl backdrop-blur-sm transition-all duration-500
-            ${step === "login" ? "scale-100" : "scale-100"}
-          `}
-        >
-          {step === "welcome" ? (
-            <div className="space-y-6 text-center">
-              <div className="space-y-2">
-                <h2 className="text-xl font-semibold text-white">¡Bienvenido!</h2>
-                <p className="text-sm text-zinc-400">
-                  Accede a tu cuenta o crea una nueva para gestionar tus viajes.
-                </p>
-              </div>
+          {/* Title */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-black text-slate-900 leading-tight mb-4">
+              {step === "login" ? "Bienvenido de vuelta" : "Únete a nosotros"}
+            </h1>
+            <p className="text-slate-600 font-medium text-sm max-w-md leading-relaxed">
+              {step === "login" 
+                ? "Accede a tu cuenta para gestionar tus viajes y descubrir nuevas aventuras."
+                : "Crea tu cuenta y comienza a planificar tus próximas aventuras con nosotros."
+              }
+            </p>
+          </div>
 
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={() => { resetForm(); setStep("login"); }}
-                  className="
-                    group relative w-full overflow-hidden rounded-2xl 
-                    bg-gradient-to-r from-violet-600 to-purple-600 
-                    px-6 py-4 font-semibold text-white 
-                    shadow-lg shadow-violet-500/25 
-                    transition-all duration-300 
-                    hover:shadow-xl hover:shadow-violet-500/30 hover:scale-[1.02]
-                    active:scale-[0.98]
-                  "
-                >
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                    </svg>
-                    Ya tengo cuenta
-                  </span>
-                  <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => { resetForm(); setStep("register"); }}
-                  className="
-                    group relative w-full overflow-hidden rounded-2xl 
-                    bg-gradient-to-r from-emerald-600 to-teal-600 
-                    px-6 py-4 font-semibold text-white 
-                    shadow-lg shadow-emerald-500/25 
-                    transition-all duration-300 
-                    hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-[1.02]
-                    active:scale-[0.98]
-                  "
-                >
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
-                    Crear mi cuenta
-                  </span>
-                  <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                </button>
-
-                <div className="relative py-3">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/10" />
-                  </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="bg-transparent px-3 text-zinc-500">o</span>
-                  </div>
-                </div>
-
-                <Link
-                  href="/"
-                  className="
-                    block w-full rounded-2xl border border-white/10 
-                    bg-white/5 px-6 py-4 font-medium text-zinc-300 
-                    transition-all duration-300 
-                    hover:border-white/20 hover:bg-white/10 hover:text-white
-                  "
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    Explorar destinos primero
-                  </span>
-                </Link>
-              </div>
-
-              <p className="text-xs text-zinc-500">
-                Al registrarte podrás guardar tus preferencias y hacer seguimiento de tus viajes.
-              </p>
-            </div>
-          ) : step === "login" ? (
-            <div className="space-y-6">
-              {/* Back button */}
-              <button
-                type="button"
-                onClick={() => {
-                  setStep("welcome");
-                  setError(null);
-                }}
-                className="flex items-center gap-1 text-sm text-zinc-400 transition hover:text-white"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Volver
-              </button>
-
-              <div className="space-y-1">
-                <h2 className="text-xl font-semibold text-white">Iniciar sesión</h2>
-                <p className="text-sm text-zinc-400">Ingresa tus credenciales para continuar</p>
-              </div>
-
-              {error && (
-                <div className="animate-shake rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                  <div className="flex items-center gap-2">
-                    <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {error}
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-zinc-300">Correo electrónico</span>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                      <svg className="h-5 w-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                      </svg>
-                    </div>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="tu@email.com"
-                      autoComplete="email"
-                      className="
-                        w-full rounded-xl border border-white/10 bg-black/30 
-                        py-3 pl-12 pr-4 text-white placeholder-zinc-500 
-                        outline-none transition-all duration-200
-                        focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20
-                      "
-                    />
-                  </div>
-                </label>
-
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-zinc-300">Contraseña</span>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                      <svg className="h-5 w-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="••••••••"
-                      autoComplete="current-password"
-                      className="
-                        w-full rounded-xl border border-white/10 bg-black/30 
-                        py-3 pl-12 pr-12 text-white placeholder-zinc-500 
-                        outline-none transition-all duration-200
-                        focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20
-                      "
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-4 text-zinc-500 hover:text-zinc-300"
-                    >
-                      {showPassword ? (
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                        </svg>
-                      ) : (
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </label>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => void handleLogin()}
-                disabled={loading}
-                className="
-                  group relative w-full overflow-hidden rounded-xl 
-                  bg-gradient-to-r from-violet-600 to-purple-600 
-                  px-6 py-3.5 font-semibold text-white 
-                  shadow-lg shadow-violet-500/25 
-                  transition-all duration-300 
-                  hover:shadow-xl hover:shadow-violet-500/30
-                  disabled:cursor-not-allowed disabled:opacity-60
-                "
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Verificando...
-                  </span>
-                ) : (
-                  <span className="relative z-10">Iniciar sesión</span>
-                )}
-                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-              </button>
-
-              <p className="text-center text-xs text-zinc-500">
-                Al iniciar sesión, aceptas nuestros términos de servicio y política de privacidad.
-              </p>
-            </div>
-          ) : (
-            /* step === "register" */
-            <div className="space-y-6">
-              {/* Back button */}
-              <button
-                type="button"
-                onClick={() => {
-                  setStep("welcome");
-                  setError(null);
-                }}
-                className="flex items-center gap-1 text-sm text-zinc-400 transition hover:text-white"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Volver
-              </button>
-
-              <div className="space-y-1">
-                <h2 className="text-xl font-semibold text-white">Crear cuenta</h2>
-                <p className="text-sm text-zinc-400">Únete y comienza a planear tu próxima aventura</p>
-              </div>
-
-              {error && (
-                <div className="animate-shake rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                  <div className="flex items-center gap-2">
-                    <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {error}
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-zinc-300">Nombre completo</span>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                      <svg className="h-5 w-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                    <input
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Tu nombre completo"
-                      autoComplete="name"
-                      className="
-                        w-full rounded-xl border border-white/10 bg-black/30 
-                        py-3 pl-12 pr-4 text-white placeholder-zinc-500 
-                        outline-none transition-all duration-200
-                        focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20
-                      "
-                    />
-                  </div>
-                </label>
-
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-zinc-300">Correo electrónico</span>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                      <svg className="h-5 w-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                      </svg>
-                    </div>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="tu@email.com"
-                      autoComplete="email"
-                      className="
-                        w-full rounded-xl border border-white/10 bg-black/30 
-                        py-3 pl-12 pr-4 text-white placeholder-zinc-500 
-                        outline-none transition-all duration-200
-                        focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20
-                      "
-                    />
-                  </div>
-                </label>
-
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-zinc-300">Teléfono (opcional)</span>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                      <svg className="h-5 w-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                    </div>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+52 55 1234 5678"
-                      autoComplete="tel"
-                      className="
-                        w-full rounded-xl border border-white/10 bg-black/30 
-                        py-3 pl-12 pr-4 text-white placeholder-zinc-500 
-                        outline-none transition-all duration-200
-                        focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20
-                      "
-                    />
-                  </div>
-                </label>
-
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-zinc-300">Contraseña</span>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                      <svg className="h-5 w-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Mínimo 8 caracteres"
-                      autoComplete="new-password"
-                      className="
-                        w-full rounded-xl border border-white/10 bg-black/30 
-                        py-3 pl-12 pr-12 text-white placeholder-zinc-500 
-                        outline-none transition-all duration-200
-                        focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20
-                      "
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-4 text-zinc-500 hover:text-zinc-300"
-                    >
-                      {showPassword ? (
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                        </svg>
-                      ) : (
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                  <p className="mt-1.5 text-xs text-zinc-500">Usa al menos 8 caracteres con letras y números</p>
-                </label>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => void handleRegister()}
-                disabled={loading}
-                className="
-                  group relative w-full overflow-hidden rounded-xl 
-                  bg-gradient-to-r from-emerald-600 to-teal-600 
-                  px-6 py-3.5 font-semibold text-white 
-                  shadow-lg shadow-emerald-500/25 
-                  transition-all duration-300 
-                  hover:shadow-xl hover:shadow-emerald-500/30
-                  disabled:cursor-not-allowed disabled:opacity-60
-                "
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Creando cuenta...
-                  </span>
-                ) : (
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
-                    Crear mi cuenta
-                  </span>
-                )}
-                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-              </button>
-
-              <p className="text-center text-xs text-zinc-500">
-                Al registrarte, aceptas nuestros términos de servicio y política de privacidad.
-              </p>
-
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => { resetForm(); setStep("login"); }}
-                  className="text-sm text-emerald-400 hover:text-emerald-300 transition"
-                >
-                  ¿Ya tienes cuenta? Inicia sesión
-                </button>
-              </div>
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-6 p-3 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm font-medium">
+              {error}
             </div>
           )}
-        </div>
 
-        {/* Footer */}
-        <div className="mt-6 text-center text-xs text-zinc-500">
-          <p>© 2025 Meraki Travels. Todos los derechos reservados.</p>
-        </div>
-      </div>
-    </main>
+          {/* Form */}
+          <form className="space-y-5 max-w-md" onSubmit={(e) => e.preventDefault()}>
+            {step === "register" && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Nombre completo</label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Tu nombre completo"
+                  autoComplete="name"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/80 text-slate-900 placeholder-slate-400 outline-none transition-all duration-200 focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Correo electrónico</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@email.com"
+                autoComplete="email"
+                className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/80 text-slate-900 placeholder-slate-400 outline-none transition-all duration-200 focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+              />
+            </div>
+
+            {step === "register" && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Teléfono (opcional)</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+52 55 1234 5678"
+                  autoComplete="tel"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/80 text-slate-900 placeholder-slate-400 outline-none transition-all duration-200 focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Contraseña</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete={step === "login" ? "current-password" : "new-password"}
+                  onKeyDown={handleKeyDown}
+                  className="w-full h-12 px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50/80 text-slate-900 placeholder-slate-400 outline-none transition-all duration-200 focus:border-teal-400 focus:ring-3 focus:ring-teal-100"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {showPassword ? (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L7.05 7.05M9.878 9.878a3 3 0 00-.007 4.243m4.242-4.242L16.95 7.05M14.121 14.121l2.829 2.829m-2.829-2.829a3 3 0 01-4.242 0M12 9a3 3 0 00-3 3m6 0a3 3 0 00-3-3m0 6a3 3 0 003-3" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Options row */}
+            {step === "login" && (
+              <div className="flex justify-between items-center text-sm">
+                <label className="flex items-center gap-2 text-slate-600 font-medium">
+                  <input 
+                    type="checkbox" 
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="rounded accent-teal-500" 
+                  />
+                  <span>Recordarme</span>
+                </label>
+                <Link 
+                  href="#" 
+                  className="text-teal-600 font-bold hover:text-teal-700 transition-colors"
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              onClick={step === "login" ? handleLogin : handleRegister}
+              className="w-full h-12 bg-gradient-to-r from-teal-500 to-emerald-600 border border-teal-400/60 text-white font-bold rounded-xl shadow-lg shadow-teal-500/25 transition-all duration-200 hover:shadow-xl hover:shadow-teal-500/30 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Procesando...
+                </div>
+              ) : (
+                step === "login" ? "Iniciar sesión" : "Crear cuenta"
+              )}
+            </button>
+
+            {/* Toggle Form */}
+            <div className="text-center text-sm text-slate-600 pt-4">
+              {step === "login" ? (
+                <span>
+                  ¿No tienes cuenta?{" "}
+                  <button
+                    type="button"
+                    onClick={() => { resetForm(); setStep("register"); }}
+                    className="text-teal-600 font-bold hover:text-teal-700 transition-colors"
+                  >
+                    Crear una
+                  </button>
+                </span>
+              ) : (
+                <span>
+                  ¿Ya tienes cuenta?{" "}
+                  <button
+                    type="button"
+                    onClick={() => { resetForm(); setStep("login"); }}
+                    className="text-teal-600 font-bold hover:text-teal-700 transition-colors"
+                  >
+                    Iniciar sesión
+                  </button>
+                </span>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="text-center text-xs text-slate-500 pt-6 font-medium">
+              © {new Date().getFullYear()} Meraki Travels · Tu próxima aventura
+            </div>
+          </form>
+        </section>
+
+        {/* Right Panel - Visual */}
+        <section className="hidden lg:flex relative bg-gradient-to-br from-teal-500/95 via-emerald-500/90 to-cyan-600/85 items-center justify-center p-8" aria-label="Panel visual">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,.08)_1px,transparent_1px)] bg-[size:20px_20px] opacity-40"></div>
+          
+          {/* Main Illustration */}
+          <div className="relative w-full h-full max-w-lg bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6 shadow-2xl shadow-black/20">
+            <div className="w-full h-full bg-white/10 rounded-xl border border-white/30 flex items-center justify-center overflow-hidden">
+              {/* Travel Image */}
+              <img 
+                src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=800&auto=format&fit=crop"
+                alt="Destinos de ensueño" 
+                className="w-full h-full object-cover rounded-xl opacity-95 filter drop-shadow-2xl"
+                onError={(e) => {
+                  // Fallback to travel icon if image fails
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML = `
+                      <div class="text-white/80 text-center">
+                        <svg class="w-24 h-24 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.75 21h16.5M4.5 3h15l-.75 18h-13.5L4.5 3z M9 9l3 3m0 0l3-3m-3 3V3" />
+                        </svg>
+                        <h3 class="text-xl font-semibold mb-2">Tu próxima aventura</h3>
+                        <p class="text-white/70 text-sm">Descubre destinos increíbles con Meraki Travels</p>
+                      </div>
+                    `;
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Floating Elements - nubes decorativas */}
+          <div className="absolute top-8 left-8 w-16 h-8 bg-white/15 border border-white/20 rounded-full blur-[0.5px]"></div>
+          <div className="absolute bottom-12 right-12 w-12 h-6 bg-white/10 border border-white/15 rounded-full blur-[0.5px]"></div>
+          <div className="absolute top-1/3 right-8 w-8 h-8 bg-white/20 border border-white/25 rounded-full blur-[0.5px]"></div>
+        </section>
+
+      </main>
+    </div>
   );
 }

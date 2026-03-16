@@ -3,6 +3,21 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useSessionStore } from "@/lib/session-store";
+import { 
+  FaEnvelope, 
+  FaWhatsapp, 
+  FaPhone, 
+  FaHeadset,
+  FaQuestionCircle,
+  FaChevronDown,
+  FaChevronUp,
+  FaFileAlt,
+  FaExclamationTriangle,
+  FaClipboard,
+  FaUser,
+  FaClock,
+  FaUsers
+} from "react-icons/fa";
 
 type ContactMethod = "email" | "whatsapp" | "call";
 type Category = "reservations" | "payments" | "travel" | "other";
@@ -44,6 +59,16 @@ const faqs: FAQ[] = [
     answer: "Los requisitos de visa varían según tu nacionalidad y destino. Te recomendamos verificar con la embajada correspondiente antes de viajar.",
     category: "travel",
   },
+  {
+    question: "¿Qué hago si mi vuelo se cancela?",
+    answer: "Si tu vuelo se cancela, contacta inmediatamente a nuestro equipo de soporte. Te ayudaremos a conseguir vuelos alternativos sin costo adicional cuando sea posible.",
+    category: "travel",
+  },
+  {
+    question: "¿Puedo cambiar el nombre del pasajero?",
+    answer: "Los cambios de nombre están sujetos a las políticas de la aerolínea y pueden generar cargos. Contacta a soporte lo antes posible para solicitar el cambio.",
+    category: "reservations",
+  }
 ];
 
 const categoryLabels: Record<Category, string> = {
@@ -53,336 +78,252 @@ const categoryLabels: Record<Category, string> = {
   other: "Otros",
 };
 
+const categoryIcons: Record<Category, React.ReactNode> = {
+  reservations: <FaClipboard className="h-5 w-5" />,
+  payments: <FaFileAlt className="h-5 w-5" />,
+  travel: <FaUsers className="h-5 w-5" />,
+  other: <FaQuestionCircle className="h-5 w-5" />,
+};
+
 export default function SoportePage() {
   const { customer, hydrated } = useSessionStore();
   const [selectedCategory, setSelectedCategory] = useState<Category | "all">("all");
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [contactMethod, setContactMethod] = useState<ContactMethod | null>(null);
-  const [message, setMessage] = useState("");
-  const [subject, setSubject] = useState("");
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
 
   const filteredFaqs = selectedCategory === "all" 
     ? faqs 
-    : faqs.filter(f => f.category === selectedCategory);
+    : faqs.filter(faq => faq.category === selectedCategory);
 
-  async function handleSendMessage() {
-    if (!message.trim() || !subject.trim()) return;
-    
-    setSending(true);
-    // Simulate sending
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setSending(false);
-    setSent(true);
-    setMessage("");
-    setSubject("");
-    
-    // Reset sent state after a few seconds
-    setTimeout(() => setSent(false), 5000);
-  }
-
-  function openWhatsApp() {
-    const phoneNumber = "525512345678"; // Replace with actual number
-    const text = encodeURIComponent("Hola, necesito ayuda con mi reservación en Meraki Travels.");
-    window.open(`https://wa.me/${phoneNumber}?text=${text}`, "_blank");
-  }
-
-  function openEmail() {
-    const email = "soporte@merakitravels.com";
-    const emailSubject = encodeURIComponent(subject || "Consulta desde el portal");
-    const body = encodeURIComponent(message || "");
-    window.open(`mailto:${email}?subject=${emailSubject}&body=${body}`, "_blank");
-  }
-
-  if (!hydrated) {
-    return (
-      <main className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
-      </main>
-    );
-  }
+  const contactMethods = [
+    {
+      id: "whatsapp" as ContactMethod,
+      name: "WhatsApp",
+      description: "Respuesta inmediata",
+      detail: "Chat directo con nuestro equipo",
+      icon: <FaWhatsapp className="h-6 w-6" />,
+      color: "bg-green-600 hover:bg-green-700",
+      action: () => window.open("https://wa.me/5215512345678", "_blank"),
+    },
+    {
+      id: "email" as ContactMethod,
+      name: "Email",
+      description: "soporte@merakitravels.com",
+      detail: "Respuesta en 2-4 horas",
+      icon: <FaEnvelope className="h-6 w-6" />,
+      color: "bg-blue-600 hover:bg-blue-700",
+      action: () => window.open("mailto:soporte@merakitravels.com", "_blank"),
+    },
+    {
+      id: "call" as ContactMethod,
+      name: "Llamada",
+      description: "+52 55 1234 5678",
+      detail: "Lun-Vie 9AM-6PM",
+      icon: <FaPhone className="h-6 w-6" />,
+      color: "bg-teal-600 hover:bg-teal-700",
+      action: () => window.open("tel:+525512345678", "_blank"),
+    },
+  ];
 
   return (
-    <main className="space-y-8 p-6">
+    <main className="space-y-8">
       {/* Header */}
-      <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/25">
-          <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
+      <div className="text-center space-y-4">
+        <div className="mx-auto w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">
+          <FaHeadset className="h-8 w-8 text-teal-600" />
         </div>
-        <h1 className="text-2xl font-bold text-white">Centro de Ayuda</h1>
-        <p className="mt-2 text-zinc-400">
-          Estamos aquí para ayudarte con cualquier consulta sobre tus viajes
-        </p>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-800">Centro de ayuda</h1>
+          <p className="text-slate-600 max-w-2xl mx-auto">
+            Encuentra respuestas a tus preguntas o contacta con nuestro equipo de soporte para ayudarte con cualquier duda sobre tus viajes.
+          </p>
+        </div>
       </div>
 
-      {/* Contact methods */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <button
-          type="button"
-          onClick={openWhatsApp}
-          className="group flex flex-col items-center gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-6 transition-all hover:border-emerald-400/40 hover:bg-emerald-500/20"
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-3 justify-center">
+        <Link
+          href="/app/incidencias"
+          className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-700"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/20 transition-transform group-hover:scale-110">
-            <svg className="h-6 w-6 text-emerald-300" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-            </svg>
-          </div>
-          <div className="text-center">
-            <h3 className="font-semibold text-emerald-200">WhatsApp</h3>
-            <p className="text-sm text-emerald-300/70">Respuesta inmediata</p>
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setContactMethod("email")}
-          className="group flex flex-col items-center gap-3 rounded-2xl border border-violet-400/20 bg-violet-500/10 p-6 transition-all hover:border-violet-400/40 hover:bg-violet-500/20"
+          <FaExclamationTriangle className="h-4 w-4" />
+          Reportar problema
+        </Link>
+        <Link
+          href="/app/reservas"
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/20 transition-transform group-hover:scale-110">
-            <svg className="h-6 w-6 text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <div className="text-center">
-            <h3 className="font-semibold text-violet-200">Email</h3>
-            <p className="text-sm text-violet-300/70">soporte@merakitravels.com</p>
-          </div>
-        </button>
-
-        <a
-          href="tel:+525512345678"
-          className="group flex flex-col items-center gap-3 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-6 transition-all hover:border-amber-400/40 hover:bg-amber-500/20"
+          <FaClipboard className="h-4 w-4" />
+          Mis reservas
+        </Link>
+        <Link
+          href="/app/pagos"
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/20 transition-transform group-hover:scale-110">
-            <svg className="h-6 w-6 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-            </svg>
-          </div>
-          <div className="text-center">
-            <h3 className="font-semibold text-amber-200">Teléfono</h3>
-            <p className="text-sm text-amber-300/70">+52 55 1234 5678</p>
-          </div>
-        </a>
+          <FaFileAlt className="h-4 w-4" />
+          Mis pagos
+        </Link>
       </div>
 
-      {/* Email form (if selected) */}
-      {contactMethod === "email" && (
-        <div className="rounded-2xl border border-violet-400/20 bg-violet-500/10 p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Enviar mensaje</h2>
+      {/* Contact Methods */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold text-slate-800 mb-6 text-center">¿Necesitas ayuda inmediata?</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {contactMethods.map((method) => (
             <button
-              type="button"
-              onClick={() => setContactMethod(null)}
-              className="text-zinc-400 hover:text-white"
+              key={method.id}
+              onClick={method.action}
+              className={`p-4 rounded-xl text-white transition-colors ${method.color} text-left`}
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          {sent ? (
-            <div className="flex flex-col items-center gap-3 py-8 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/20">
-                <svg className="h-7 w-7 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+              <div className="flex items-center gap-3 mb-2">
+                {method.icon}
+                <span className="font-semibold">{method.name}</span>
               </div>
-              <p className="text-emerald-200">¡Mensaje enviado!</p>
-              <p className="text-sm text-zinc-400">Te responderemos a la brevedad.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {customer && (
-                <div className="rounded-xl bg-white/5 px-4 py-3 text-sm text-zinc-300">
-                  Enviando como: <span className="font-medium text-white">{customer.email}</span>
-                </div>
-              )}
-              
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-zinc-300">Asunto</span>
-                <input
-                  type="text"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="¿Sobre qué necesitas ayuda?"
-                  className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder-zinc-500 outline-none transition focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20"
-                />
-              </label>
-
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-zinc-300">Mensaje</span>
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Cuéntanos los detalles de tu consulta..."
-                  rows={5}
-                  className="w-full resize-none rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder-zinc-500 outline-none transition focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/20"
-                />
-              </label>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => void handleSendMessage()}
-                  disabled={sending || !subject.trim() || !message.trim()}
-                  className="flex-1 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-3 font-medium text-white shadow-lg shadow-violet-500/25 transition hover:shadow-violet-500/40 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {sending ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      Enviando...
-                    </span>
-                  ) : (
-                    "Enviar mensaje"
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={openEmail}
-                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-300 transition hover:bg-white/10"
-                >
-                  Abrir en cliente de correo
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* FAQs */}
-      <div className="space-y-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-lg font-semibold text-white">Preguntas frecuentes</h2>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedCategory("all")}
-              className={`rounded-lg px-3 py-1.5 text-sm transition ${
-                selectedCategory === "all"
-                  ? "bg-violet-500/20 text-violet-200"
-                  : "bg-white/5 text-zinc-400 hover:bg-white/10"
-              }`}
-            >
-              Todas
+              <p className="text-sm opacity-90 mb-1">{method.description}</p>
+              <p className="text-xs opacity-75">{method.detail}</p>
             </button>
-            {(Object.keys(categoryLabels) as Category[]).map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`rounded-lg px-3 py-1.5 text-sm transition ${
-                  selectedCategory === cat
-                    ? "bg-violet-500/20 text-violet-200"
-                    : "bg-white/5 text-zinc-400 hover:bg-white/10"
-                }`}
-              >
-                {categoryLabels[cat]}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {filteredFaqs.map((faq, index) => (
-            <div
-              key={index}
-              className="overflow-hidden rounded-xl border border-white/10 bg-white/5"
-            >
-              <button
-                type="button"
-                onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
-                className="flex w-full items-center justify-between p-4 text-left transition hover:bg-white/5"
-              >
-                <span className="font-medium text-white">{faq.question}</span>
-                <svg
-                  className={`h-5 w-5 text-zinc-400 transition-transform ${
-                    expandedFaq === index ? "rotate-180" : ""
-                  }`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {expandedFaq === index && (
-                <div className="border-t border-white/10 bg-white/5 px-4 py-3">
-                  <p className="text-sm text-zinc-300">{faq.answer}</p>
-                </div>
-              )}
-            </div>
           ))}
         </div>
       </div>
 
-      {/* Quick links */}
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-        <h2 className="mb-4 text-lg font-semibold text-white">Enlaces rápidos</h2>
-        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-          <Link
-            href="/app/reservas"
-            className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/20">
-              <svg className="h-5 w-5 text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-white">Mis viajes</span>
-          </Link>
-          <Link
-            href="/app/pagos"
-            className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/20">
-              <svg className="h-5 w-5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-white">Mis pagos</span>
-          </Link>
-          <Link
-            href="/app/perfil"
-            className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/20">
-              <svg className="h-5 w-5 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-white">Mi perfil</span>
-          </Link>
-          <Link
-            href="/"
-            className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/20">
-              <svg className="h-5 w-5 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-white">Buscar viajes</span>
-          </Link>
+      {/* Horarios de atención */}
+      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+        <div className="flex items-start gap-3">
+          <FaClock className="h-5 w-5 text-blue-600 mt-0.5" />
+          <div>
+            <h3 className="font-medium text-blue-800">Horarios de atención</h3>
+            <p className="text-sm text-blue-700 mt-1">
+              <strong>Lunes a Viernes:</strong> 9:00 AM - 6:00 PM (GMT-6)<br />
+              <strong>Sábados:</strong> 10:00 AM - 2:00 PM<br />
+              <strong>Emergencias 24/7:</strong> WhatsApp disponible siempre
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Business hours */}
-      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 p-6 text-center">
-        <h3 className="font-semibold text-white">Horario de atención</h3>
-        <p className="mt-2 text-sm text-zinc-400">
-          Lunes a Viernes: 9:00 AM - 7:00 PM<br />
-          Sábados: 10:00 AM - 3:00 PM
+      {/* FAQ Section */}
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-slate-800">Preguntas frecuentes</h2>
+          <p className="text-slate-600 mt-2">Encuentra respuestas rápidas a las consultas más comunes</p>
+        </div>
+
+        {/* Category Filter */}
+        <div className="flex flex-wrap gap-2 justify-center">
+          <button
+            onClick={() => setSelectedCategory("all")}
+            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              selectedCategory === "all"
+                ? "bg-teal-600 text-white"
+                : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50"
+            }`}
+          >
+            <FaQuestionCircle className="h-4 w-4" />
+            Todas ({faqs.length})
+          </button>
+          {(Object.entries(categoryLabels) as [Category, string][]).map(([category, label]) => {
+            const count = faqs.filter(faq => faq.category === category).length;
+            return (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  selectedCategory === category
+                    ? "bg-teal-600 text-white"
+                    : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                {categoryIcons[category]}
+                {label} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        {/* FAQ List */}
+        <div className="space-y-4">
+          {filteredFaqs.length > 0 ? (
+            filteredFaqs.map((faq, index) => (
+              <div key={index} className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <button
+                  onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
+                  className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-slate-50 transition-colors"
+                >
+                  <span className="font-medium text-slate-800 pr-4">{faq.question}</span>
+                  {expandedFaq === index ? (
+                    <FaChevronUp className="h-4 w-4 text-slate-600 flex-shrink-0" />
+                  ) : (
+                    <FaChevronDown className="h-4 w-4 text-slate-600 flex-shrink-0" />
+                  )}
+                </button>
+                {expandedFaq === index && (
+                  <div className="px-6 pb-4 border-t border-slate-100">
+                    <p className="text-slate-700 pt-4">{faq.answer}</p>
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-slate-500">
+              No hay preguntas frecuentes para esta categoría.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Still Need Help */}
+      <div className="rounded-2xl border border-teal-200 bg-teal-50 p-8 text-center">
+        <FaUser className="mx-auto h-12 w-12 text-teal-600 mb-4" />
+        <h3 className="text-xl font-semibold text-teal-800 mb-2">¿Aún necesitas ayuda?</h3>
+        <p className="text-teal-700 mb-6 max-w-md mx-auto">
+          Si no encontraste la respuesta que buscabas, nuestro equipo de soporte está aquí para ayudarte.
         </p>
-        <p className="mt-3 text-xs text-zinc-500">
-          WhatsApp disponible 24/7 para emergencias en viaje
-        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/app/incidencias"
+            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-6 py-3 font-medium text-white transition-colors hover:bg-teal-700"
+          >
+            <FaExclamationTriangle className="h-5 w-5" />
+            Crear ticket de soporte
+          </Link>
+          <button
+            onClick={() => window.open("https://wa.me/5215512345678", "_blank")}
+            className="inline-flex items-center gap-2 rounded-lg border border-teal-300 bg-white px-6 py-3 font-medium text-teal-700 transition-colors hover:bg-teal-50"
+          >
+            <FaWhatsapp className="h-5 w-5" />
+            Chat directo por WhatsApp
+          </button>
+        </div>
+      </div>
+
+      {/* Emergency Contact */}
+      <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+        <div className="flex items-start gap-3">
+          <FaExclamationTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+          <div>
+            <h3 className="font-medium text-red-800">¿Es una emergencia durante tu viaje?</h3>
+            <p className="text-sm text-red-700 mt-1">
+              Para emergencias durante tu viaje (vuelos cancelados, problemas en destino, etc.), 
+              contáctanos inmediatamente por WhatsApp o llama a nuestro número de emergencia.
+            </p>
+            <div className="mt-3 flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={() => window.open("https://wa.me/5215512345678", "_blank")}
+                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+              >
+                <FaWhatsapp className="h-4 w-4" />
+                WhatsApp Emergencia
+              </button>
+              <button
+                onClick={() => window.open("tel:+525512345678", "_blank")}
+                className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+              >
+                <FaPhone className="h-4 w-4" />
+                Llamar emergencia
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   );

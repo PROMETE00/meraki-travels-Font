@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { http, isHttpErrorStatus } from "@/lib/http";
 import { buildAuthHeaders, useSessionStore } from "@/lib/session-store";
+import type { AdminMediaFileItem } from "@/features/search/types";
 
 type DomeImageItem = {
   id: number;
@@ -10,6 +11,8 @@ type DomeImageItem = {
   imageUrl: string;
   altText: string | null;
   linkUrl: string | null;
+  promoLabel: string | null;
+  promoBadge: string | null;
   priority: number;
   isActive: boolean;
   createdAt: string;
@@ -22,6 +25,8 @@ type DomeImageFormState = {
   imageUrl: string;
   altText: string;
   linkUrl: string;
+  promoLabel: string;
+  promoBadge: string;
   priority: string;
   isActive: boolean;
 };
@@ -32,9 +37,62 @@ const emptyForm: DomeImageFormState = {
   imageUrl: "",
   altText: "",
   linkUrl: "",
+  promoLabel: "",
+  promoBadge: "",
   priority: "0",
   isActive: true,
 };
+
+const MAX_UPLOAD_SIDE = 1600;
+const JPEG_QUALITY = 0.85;
+
+async function optimizeImageForUpload(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || file.type === "image/gif") {
+    return file;
+  }
+
+  const imageUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("No se pudo leer la imagen seleccionada."));
+      img.src = imageUrl;
+    });
+
+    const longestSide = Math.max(image.naturalWidth, image.naturalHeight);
+    const scale = longestSide > MAX_UPLOAD_SIDE ? MAX_UPLOAD_SIDE / longestSide : 1;
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return file;
+    }
+    ctx.drawImage(image, 0, 0, width, height);
+
+    const outputType = file.type === "image/png" ? "image/png" : "image/jpeg";
+    const outputQuality = outputType === "image/jpeg" ? JPEG_QUALITY : undefined;
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob((output) => resolve(output), outputType, outputQuality);
+    });
+
+    if (!blob || blob.size >= file.size) {
+      return file;
+    }
+
+    const optimizedName = `${file.name.replace(/\.[^/.]+$/, "")}.${outputType === "image/png" ? "png" : "jpg"}`;
+    return new File([blob], optimizedName, {
+      type: outputType,
+      lastModified: Date.now(),
+    });
+  } finally {
+    URL.revokeObjectURL(imageUrl);
+  }
+}
 
 export default function AdminDomePage() {
   const { customer, token, hydrated } = useSessionStore();
@@ -43,9 +101,12 @@ export default function AdminDomePage() {
   const canOperate = isAdmin || isOperations;
 
   const [images, setImages] = useState<DomeImageItem[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<AdminMediaFileItem[]>([]);
   const [form, setForm] = useState<DomeImageFormState>(emptyForm);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [deletingMedia, setDeletingMedia] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -58,10 +119,13 @@ export default function AdminDomePage() {
     }
     setLoading(true);
     try {
-      const data = await http<DomeImageItem[]>("/api/admin/dome-images", {
-        headers: buildAuthHeaders(token),
-      });
-      setImages(data);
+      const headers = buildAuthHeaders(token);
+      const [domeData, mediaData] = await Promise.all([
+        http<DomeImageItem[]>("/api/admin/dome-images", { headers }),
+        http<{ files: AdminMediaFileItem[] }>("/api/admin/media/files?scope=dome", { headers }),
+      ]);
+      setImages(domeData);
+      setMediaFiles(mediaData.files);
     } catch (err) {
       console.error("Error loading dome images:", err);
       if (isHttpErrorStatus(err, 401) || isHttpErrorStatus(err, 403)) {
@@ -95,6 +159,8 @@ export default function AdminDomePage() {
       imageUrl: form.imageUrl.trim(),
       altText: form.altText.trim() || null,
       linkUrl: form.linkUrl.trim() || null,
+      promoLabel: form.promoLabel.trim() || null,
+      promoBadge: form.promoBadge.trim() || null,
       priority: parseInt(form.priority, 10) || 0,
       isActive: form.isActive,
     };
@@ -138,6 +204,8 @@ export default function AdminDomePage() {
       imageUrl: img.imageUrl,
       altText: img.altText || "",
       linkUrl: img.linkUrl || "",
+      promoLabel: img.promoLabel || "",
+      promoBadge: img.promoBadge || "",
       priority: String(img.priority),
       isActive: img.isActive,
     });
@@ -175,6 +243,73 @@ export default function AdminDomePage() {
     setMessage(null);
   };
 
+  const uploadDomeImage = async (file: File) => {
+    if (!token) return;
+
+    try {
+      setUploading(true);
+      setError(null);
+      setMessage(null);
+      const optimizedFile = await optimizeImageForUpload(file);
+      const formData = new FormData();
+      formData.append("file", optimizedFile);
+
+      const response = await fetch("/api/admin/media/upload?scope=dome", {
+        method: "POST",
+        headers: buildAuthHeaders(token),
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(body || "No se pudo subir la imagen.");
+      }
+
+      const uploaded = (await response.json()) as { url: string };
+      setForm((current) => ({ ...current, imageUrl: uploaded.url }));
+      setMessage("Imagen subida correctamente y seleccionada en el formulario.");
+      await loadImages();
+    } catch (uploadError) {
+      console.error("Error uploading dome image:", uploadError);
+      setError("No pudimos subir la imagen del Dome. Usa JPG, PNG, WEBP o GIF.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const deleteDomeMedia = async (file: AdminMediaFileItem) => {
+    if (!token) return;
+
+    try {
+      setDeletingMedia(file.name);
+      setError(null);
+      setMessage(null);
+      const response = await fetch(
+        `/api/admin/media/files?scope=dome&filename=${encodeURIComponent(file.name)}`,
+        {
+          method: "DELETE",
+          headers: buildAuthHeaders(token),
+        },
+      );
+
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(body || "No se pudo eliminar la imagen.");
+      }
+
+      setForm((current) =>
+        current.imageUrl === file.url ? { ...current, imageUrl: "" } : current,
+      );
+      setMessage("Imagen eliminada de la galería del Dome.");
+      await loadImages();
+    } catch (deleteError) {
+      console.error("Error deleting dome media:", deleteError);
+      setError("No pudimos eliminar la imagen seleccionada.");
+    } finally {
+      setDeletingMedia(null);
+    }
+  };
+
   if (!hydrated) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -197,15 +332,25 @@ export default function AdminDomePage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 py-8 text-slate-900">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900">
-          Imágenes del Dome Gallery
+          Promociones del Dome Gallery
         </h1>
         <p className="mt-2 text-slate-600">
-          Administra los destinos destacados que aparecen en la galería 3D del inicio.
-          Las imágenes se ordenan por prioridad (mayor = más importante).
+          Crea promociones destacadas para la galería 3D: imagen, texto promocional, badge y enlace.
+          Puedes subir nuevas imágenes o reutilizar archivos ya cargados.
         </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => void loadImages()}
+            disabled={loading}
+            className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-500 disabled:opacity-60"
+          >
+            {loading ? "Actualizando..." : "Actualizar"}
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
@@ -226,37 +371,79 @@ export default function AdminDomePage() {
         className="mb-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
       >
         <h2 className="mb-4 text-lg font-semibold text-slate-900">
-          {form.id ? "Editar Imagen" : "Nueva Imagen de Destino"}
+          {form.id ? "Editar Promoción" : "Nueva Promoción"}
         </h2>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                Nombre del Destino *
+              </label>
+              <input
+                type="text"
+                value={form.destinationName}
+                onChange={(e) =>
+                  setForm({ ...form, destinationName: e.target.value })
+                }
+                required
+                placeholder="Ej: Cancún, París, Tokio"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+              />
+          </div>
+
+          <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                URL de Imagen *
+              </label>
+            <input
+              type="text"
+              value={form.imageUrl}
+              onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+              required
+              placeholder="https://... o /media/dome/archivo.jpg"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+            />
+            <div className="mt-2">
+              <label className="inline-flex cursor-pointer items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                {uploading ? "Subiendo..." : "Subir imagen desde tu equipo"}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="sr-only"
+                  disabled={uploading}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) void uploadDomeImage(file);
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+
+          <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
-              Nombre del Destino *
+              Texto Promocional
             </label>
             <input
               type="text"
-              value={form.destinationName}
-              onChange={(e) =>
-                setForm({ ...form, destinationName: e.target.value })
-              }
-              required
-              placeholder="Ej: Cancún, París, Tokio"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+              value={form.promoLabel}
+              onChange={(e) => setForm({ ...form, promoLabel: e.target.value })}
+              placeholder="Ej: Oferta de temporada"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
             />
           </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
-              URL de Imagen *
+              Badge
             </label>
             <input
-              type="url"
-              value={form.imageUrl}
-              onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-              required
-              placeholder="https://..."
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+              type="text"
+              value={form.promoBadge}
+              onChange={(e) => setForm({ ...form, promoBadge: e.target.value })}
+              placeholder="Ej: HOT, -30%, NUEVO"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
             />
           </div>
 
@@ -264,39 +451,39 @@ export default function AdminDomePage() {
             <label className="mb-1 block text-sm font-medium text-slate-700">
               Texto Alternativo
             </label>
-            <input
-              type="text"
-              value={form.altText}
-              onChange={(e) => setForm({ ...form, altText: e.target.value })}
-              placeholder="Descripción para accesibilidad"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
-            />
-          </div>
+              <input
+                type="text"
+                value={form.altText}
+                onChange={(e) => setForm({ ...form, altText: e.target.value })}
+                placeholder="Descripción para accesibilidad"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+              />
+            </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
               URL de Enlace
             </label>
-            <input
-              type="text"
-              value={form.linkUrl}
-              onChange={(e) => setForm({ ...form, linkUrl: e.target.value })}
-              placeholder="/paquetes?destino=cancun"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
-            />
-          </div>
+              <input
+                type="text"
+                value={form.linkUrl}
+                onChange={(e) => setForm({ ...form, linkUrl: e.target.value })}
+                placeholder="/paquetes?destino=cancun"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+              />
+            </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
               Prioridad
             </label>
-            <input
-              type="number"
-              value={form.priority}
-              onChange={(e) => setForm({ ...form, priority: e.target.value })}
-              placeholder="0"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
-            />
+              <input
+                type="number"
+                value={form.priority}
+                onChange={(e) => setForm({ ...form, priority: e.target.value })}
+                placeholder="0"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+              />
             <p className="mt-1 text-xs text-slate-500">
               Mayor número = mayor prioridad en la galería
             </p>
@@ -318,6 +505,58 @@ export default function AdminDomePage() {
               {form.isActive ? "Activo (visible)" : "Inactivo (oculto)"}
             </span>
           </div>
+        </div>
+
+        <div className="mt-6">
+          <h3 className="mb-2 text-sm font-semibold text-slate-800">
+            Imágenes disponibles (reutilizar)
+          </h3>
+          {mediaFiles.length === 0 ? (
+            <p className="text-sm text-slate-500">No hay imágenes subidas en `dome`.</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {mediaFiles.map((file) => {
+                const selected = form.imageUrl === file.url;
+                return (
+                  <div
+                    key={file.name}
+                    className={`rounded-xl border p-2 ${selected ? "border-violet-500 bg-violet-50" : "border-slate-200"}`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setForm((current) => ({ ...current, imageUrl: file.url }))}
+                      className="w-full text-left"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={file.url}
+                        alt={file.name}
+                        className="h-28 w-full rounded-lg object-cover"
+                      />
+                      <p className="mt-2 truncate text-xs text-slate-600">{file.name}</p>
+                    </button>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setForm((current) => ({ ...current, imageUrl: file.url }))}
+                        className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                      >
+                        Usar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void deleteDomeMedia(file)}
+                        disabled={deletingMedia === file.name}
+                        className="rounded-md border border-red-300 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        {deletingMedia === file.name ? "..." : "Eliminar"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Preview */}
@@ -362,7 +601,7 @@ export default function AdminDomePage() {
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 px-6 py-4">
           <h2 className="text-lg font-semibold text-slate-900">
-            Imágenes Configuradas ({images.length})
+            Promociones Configuradas ({images.length})
           </h2>
         </div>
 
@@ -372,7 +611,7 @@ export default function AdminDomePage() {
           </div>
         ) : images.length === 0 ? (
           <div className="px-6 py-12 text-center text-slate-500">
-            No hay imágenes configuradas. Crea la primera arriba.
+            No hay promociones configuradas. Crea la primera arriba.
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -413,6 +652,12 @@ export default function AdminDomePage() {
                     Prioridad: {img.priority}
                     {img.linkUrl && ` • ${img.linkUrl}`}
                   </p>
+                  {(img.promoLabel || img.promoBadge) && (
+                    <p className="mt-0.5 truncate text-xs text-violet-700">
+                      {img.promoLabel || "Sin label"}
+                      {img.promoBadge ? ` • ${img.promoBadge}` : ""}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex gap-2">

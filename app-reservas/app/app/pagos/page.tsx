@@ -5,13 +5,25 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { http, isHttpErrorStatus } from "@/lib/http";
 import { buildAuthHeaders, useSessionStore } from "@/lib/session-store";
 import type { PaymentHistoryItem } from "@/features/search/types";
+import {
+  FaCheckCircle,
+  FaExclamationTriangle,
+  FaTimesCircle,
+  FaUndo,
+  FaBan,
+  FaCreditCard,
+  FaMoneyBillWave,
+  FaFileInvoiceDollar,
+  FaCalendarAlt,
+  FaChartLine
+} from "react-icons/fa";
 
 const paymentStyles: Record<string, string> = {
-  REQUIRES_ACTION: "border-amber-400/30 bg-amber-500/10 text-amber-100",
-  SUCCEEDED: "border-emerald-400/30 bg-emerald-500/10 text-emerald-100",
-  CANCELED: "border-rose-400/30 bg-rose-500/10 text-rose-100",
-  REFUNDED: "border-sky-400/30 bg-sky-500/10 text-sky-100",
-  FAILED: "border-red-400/30 bg-red-500/10 text-red-100",
+  REQUIRES_ACTION: "border-amber-200 bg-amber-50 text-amber-700",
+  SUCCEEDED: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  CANCELED: "border-slate-200 bg-slate-50 text-slate-700",
+  REFUNDED: "border-blue-200 bg-blue-50 text-blue-700",
+  FAILED: "border-red-200 bg-red-50 text-red-700",
 };
 
 const statusLabels: Record<string, string> = {
@@ -23,31 +35,11 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusIcons: Record<string, React.ReactNode> = {
-  REQUIRES_ACTION: (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-    </svg>
-  ),
-  SUCCEEDED: (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  ),
-  CANCELED: (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  ),
-  REFUNDED: (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-    </svg>
-  ),
-  FAILED: (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  ),
+  REQUIRES_ACTION: <FaExclamationTriangle className="h-4 w-4" />,
+  SUCCEEDED: <FaCheckCircle className="h-4 w-4" />,
+  CANCELED: <FaBan className="h-4 w-4" />,
+  REFUNDED: <FaUndo className="h-4 w-4" />,
+  FAILED: <FaTimesCircle className="h-4 w-4" />,
 };
 
 function formatDate(date: string) {
@@ -78,310 +70,291 @@ export default function PagosPage() {
     }
 
     try {
-      setLoading(true);
-      setError(null);
-      const payments = await http<PaymentHistoryItem[]>("/api/payments", {
+      const response = await http<PaymentHistoryItem[]>("/api/payments", {
         headers: buildAuthHeaders(token),
       });
-      setItems(payments);
-    } catch (loadError) {
-      console.error(loadError);
-      if (isHttpErrorStatus(loadError, 401)) {
+      setItems(response);
+    } catch (err) {
+      console.error("Error loading payments:", err);
+      if (isHttpErrorStatus(err, 401)) {
         logout();
-        setError("Tu sesión expiró. Inicia sesión nuevamente para consultar tus pagos.");
-      } else {
-        setError("No pudimos cargar el historial de pagos.");
+        return;
       }
+      setError("Error al cargar tus pagos. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
-  }, [customer, logout, token]);
+  }, [customer, token, logout]);
 
   useEffect(() => {
-    if (!hydrated) {
-      return;
+    if (hydrated) {
+      loadPayments();
     }
-    void loadPayments();
   }, [hydrated, loadPayments]);
 
-  const sortedItems = useMemo(
-    () => [...items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-    [items],
-  );
+  const sortedPayments = useMemo(() => {
+    return [...items].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [items]);
 
-  // Calculate totals
-  const totals = useMemo(() => {
-    const paid = sortedItems.filter(p => p.status === "SUCCEEDED").reduce((sum, p) => sum + p.amount, 0);
-    const refunded = sortedItems.filter(p => p.status === "REFUNDED").reduce((sum, p) => sum + p.amount, 0);
-    const pending = sortedItems.filter(p => p.status === "REQUIRES_ACTION").reduce((sum, p) => sum + p.amount, 0);
-    return { paid, refunded, pending };
-  }, [sortedItems]);
+  const stats = useMemo(() => {
+    const totalPaid = items
+      .filter(p => p.status === "SUCCEEDED")
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    
+    const totalRefunded = items
+      .filter(p => p.status === "REFUNDED")
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    
+    const pendingActions = items.filter(p => p.status === "REQUIRES_ACTION").length;
+    
+    return { totalPaid, totalRefunded, pendingActions };
+  }, [items]);
 
   return (
-    <main className="space-y-6 p-6">
+    <main className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="space-y-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Mis Pagos</h1>
-          <p className="text-sm text-zinc-400">
-            Historial completo de transacciones y reembolsos
+          <h1 className="text-3xl font-bold text-slate-800">Historial de pagos</h1>
+          <p className="text-slate-600">
+            Revisa tus transacciones, comprobantes y estados de pago.
           </p>
         </div>
 
-        <div className="flex gap-3">
+        {/* Quick Actions */}
+        <div className="flex flex-wrap gap-3">
           <Link
             href="/app/reservas"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm transition hover:bg-white/10"
+            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-700"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            Ver reservas
+            <FaFileInvoiceDollar className="h-4 w-4" />
+            Ver mis reservas
           </Link>
-          <button
-            type="button"
-            onClick={() => void loadPayments()}
-            disabled={!customer}
-            className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm transition hover:bg-white/15 disabled:opacity-60"
+          <Link
+            href="/app/soporte"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Actualizar
-          </button>
+            <FaMoneyBillWave className="h-4 w-4" />
+            Ayuda con pagos
+          </Link>
         </div>
       </div>
 
-      {/* Stats cards */}
-      {hydrated && customer && !loading && sortedItems.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-4">
+      {/* Stats Cards */}
+      {hydrated && customer && items.length > 0 && (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20">
-                <svg className="h-5 w-5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div className="rounded-lg bg-emerald-100 p-2">
+                <FaCheckCircle className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{formatMoney(totals.paid, "MXN")}</p>
-                <p className="text-xs text-zinc-400">Total pagado</p>
+                <p className="text-2xl font-bold text-slate-800">{formatMoney(stats.totalPaid, "MXN")}</p>
+                <p className="text-sm text-slate-600">Total pagado</p>
               </div>
             </div>
           </div>
-          <div className="rounded-2xl border border-sky-400/20 bg-gradient-to-br from-sky-500/10 to-sky-500/5 p-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500/20">
-                <svg className="h-5 w-5 text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                </svg>
+              <div className="rounded-lg bg-blue-100 p-2">
+                <FaUndo className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{formatMoney(totals.refunded, "MXN")}</p>
-                <p className="text-xs text-zinc-400">Reembolsado</p>
+                <p className="text-2xl font-bold text-slate-800">{formatMoney(stats.totalRefunded, "MXN")}</p>
+                <p className="text-sm text-slate-600">Reembolsos</p>
               </div>
             </div>
           </div>
-          <div className="rounded-2xl border border-amber-400/20 bg-gradient-to-br from-amber-500/10 to-amber-500/5 p-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20">
-                <svg className="h-5 w-5 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div className="rounded-lg bg-amber-100 p-2">
+                <FaExclamationTriangle className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{formatMoney(totals.pending, "MXN")}</p>
-                <p className="text-xs text-zinc-400">Pendiente</p>
+                <p className="text-2xl font-bold text-slate-800">{stats.pendingActions}</p>
+                <p className="text-sm text-slate-600">Acciones pendientes</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-teal-100 p-2">
+                <FaChartLine className="h-5 w-5 text-teal-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-800">{items.length}</p>
+                <p className="text-sm text-slate-600">Total transacciones</p>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {!hydrated && (
-        <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+      {/* Loading State */}
+      {!hydrated || (hydrated && customer && loading) ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
+            <p className="mt-3 text-sm text-slate-600">Cargando historial de pagos...</p>
+          </div>
         </div>
-      )}
+      ) : null}
 
-      {hydrated && !customer && (
-        <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-6">
-          <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/20">
-              <svg className="h-7 w-7 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-amber-100">Inicia sesión para ver tus pagos</h3>
-              <p className="mt-1 text-sm text-amber-200/80">
-                Accede a tu cuenta para ver tu historial de transacciones y reembolsos.
-              </p>
-            </div>
+      {/* Not Logged In State */}
+      {hydrated && !customer ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
+            <FaCreditCard className="h-8 w-8 text-amber-600" />
+          </div>
+          <h3 className="mt-4 text-xl font-semibold text-amber-800">Inicia sesión para ver tus pagos</h3>
+          <p className="mt-2 text-amber-700">
+            Accede a tu cuenta para revisar el historial de transacciones y comprobantes.
+          </p>
+          <Link
+            href="/app/acceder"
+            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-amber-600 px-6 py-3 font-medium text-white transition-colors hover:bg-amber-700"
+          >
+            Iniciar sesión
+          </Link>
+        </div>
+      ) : null}
+
+      {/* Error State */}
+      {error ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error}
+        </div>
+      ) : null}
+
+      {/* Empty State */}
+      {hydrated && customer && !loading && !items.length ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-slate-100">
+            <FaMoneyBillWave className="h-10 w-10 text-slate-600" />
+          </div>
+          <h3 className="mt-6 text-2xl font-semibold text-slate-800">Aún no tienes transacciones</h3>
+          <p className="mt-2 text-slate-600 max-w-md mx-auto">
+            Cuando realices tu primera reserva, aquí aparecerá el historial de todos tus pagos y transacciones.
+          </p>
+          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href="/app/acceder"
-              className="rounded-xl bg-amber-500/20 px-5 py-2.5 text-sm font-medium text-amber-100 transition hover:bg-amber-500/30"
+              href="/app/reservas"
+              className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-6 py-3 font-medium text-white transition-colors hover:bg-teal-700"
             >
-              Iniciar sesión
+              <FaFileInvoiceDollar className="h-5 w-5" />
+              Ver mis reservas
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-6 py-3 font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Explorar destinos
             </Link>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {error && (
-        <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-          {error}
-        </div>
-      )}
-
-      {hydrated && customer && loading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
-            <p className="mt-3 text-sm text-zinc-400">Cargando historial de pagos...</p>
-          </div>
-        </div>
-      )}
-
-      {hydrated && customer && !loading && !sortedItems.length && (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-500/20">
-            <svg className="h-8 w-8 text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-            </svg>
-          </div>
-          <h3 className="mt-4 font-semibold text-white">Sin pagos registrados</h3>
-          <p className="mt-2 text-sm text-zinc-400">
-            Los pagos de tus reservaciones aparecerán aquí
-          </p>
-          <Link
-            href="/app/reservas"
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-3 font-medium text-white shadow-lg shadow-violet-500/25 transition hover:shadow-violet-500/40"
-          >
-            Ver mis reservas
-          </Link>
-        </div>
-      )}
-
-      {/* Payments list */}
-      <div className="space-y-4">
-        {sortedItems.map((payment) => (
-          <article
-            key={payment.id}
-            className="group overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 transition-all duration-300 hover:border-white/20"
-          >
-            {/* Status banner */}
-            <div className={`flex items-center gap-2 px-5 py-2 ${
-              payment.status === "SUCCEEDED" ? "bg-emerald-500/10" :
-              payment.status === "REFUNDED" ? "bg-sky-500/10" :
-              payment.status === "REQUIRES_ACTION" ? "bg-amber-500/10" :
-              "bg-zinc-800/50"
-            }`}>
-              <span className={`${
-                payment.status === "SUCCEEDED" ? "text-emerald-300" :
-                payment.status === "REFUNDED" ? "text-sky-300" :
-                payment.status === "REQUIRES_ACTION" ? "text-amber-300" :
-                "text-zinc-400"
-              }`}>
-                {statusIcons[payment.status]}
-              </span>
-              <span className={`text-sm font-medium ${
-                payment.status === "SUCCEEDED" ? "text-emerald-200" :
-                payment.status === "REFUNDED" ? "text-sky-200" :
-                payment.status === "REQUIRES_ACTION" ? "text-amber-200" :
-                "text-zinc-300"
-              }`}>
-                {statusLabels[payment.status] ?? payment.status}
-              </span>
-              <span className="ml-auto text-xs text-zinc-500">{formatDate(payment.createdAt)}</span>
-            </div>
-
-            <div className="p-5">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div className="space-y-3">
-                  <div>
-                    <h2 className="text-lg font-semibold text-white">{payment.packageTitle}</h2>
-                    <div className="mt-1 flex items-center gap-2 text-sm text-zinc-300">
-                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1">
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                        Reserva #{payment.bookingId}
-                      </span>
-                      <span className="text-zinc-500">•</span>
-                      <span>{payment.originCode} → {payment.destinationCode}</span>
-                    </div>
+      {/* Payments List */}
+      {hydrated && customer && !loading && items.length > 0 ? (
+        <div className="space-y-6">
+          {sortedPayments.map((payment) => (
+            <div key={payment.id} className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              {/* Header */}
+              <div className="border-b border-slate-100 px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${
+                      paymentStyles[payment.status] ?? paymentStyles.FAILED
+                    }`}>
+                      {statusIcons[payment.status]}
+                      {statusLabels[payment.status] ?? payment.status}
+                    </span>
                   </div>
-
-                  <div className="grid gap-2 text-sm">
-                    <div className="flex items-center gap-2 text-zinc-400">
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                      </svg>
-                      <span>Procesado por: {payment.provider}</span>
-                    </div>
-                    {payment.providerPaymentId && (
-                      <div className="flex items-center gap-2 text-zinc-500">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-                        </svg>
-                        <span className="font-mono text-xs">{payment.providerPaymentId}</span>
-                      </div>
-                    )}
-                    {payment.refundIds.length > 0 && (
-                      <div className="flex items-center gap-2 text-sky-300">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                        </svg>
-                        <span>Reembolsos: {payment.refundIds.join(", ")}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-end gap-3">
-                  <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center">
-                    <div className="text-xs uppercase tracking-widest text-zinc-500">Monto</div>
-                    <div className="mt-1 text-2xl font-bold text-white">
-                      {formatMoney(payment.amount, payment.currency)}
-                    </div>
-                  </div>
-
-                  <Link
-                    href={`/app/checkout/${payment.bookingId}`}
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    Ver detalles
-                  </Link>
+                  <span className="text-sm text-slate-500">ID: {payment.id}</span>
                 </div>
               </div>
-            </div>
-          </article>
-        ))}
-      </div>
 
-      {/* Security note */}
-      {hydrated && customer && sortedItems.length > 0 && (
-        <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-5">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-500/20">
-              <svg className="h-5 w-5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
+              <div className="p-6">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                  {/* Main info */}
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-800">
+                        {payment.packageTitle || "Pago de reserva"}
+                      </h3>
+                      <div className="mt-2 flex items-center gap-2 text-sm text-slate-600">
+                        <FaCalendarAlt className="h-4 w-4" />
+                        {formatDate(payment.createdAt)}
+                      </div>
+                    </div>
+
+                    <div className="mt-3">{/* Removed description field */}</div>
+
+                    {/* Payment Details */}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <div className="text-xs font-medium text-slate-600 uppercase tracking-wide">
+                          Método de pago
+                        </div>
+                        <div className="mt-1 text-sm font-medium text-slate-800">
+                          {payment.paymentMethod || "Tarjeta de crédito"}
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <div className="text-xs font-medium text-slate-600 uppercase tracking-wide">
+                          Referencia
+                        </div>
+                        <div className="mt-1 text-sm font-medium text-slate-800">
+                          #{payment.id}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Amount */}
+                  <div className="lg:w-48">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center">
+                      <div className="text-xs font-medium text-slate-600 uppercase tracking-wide">
+                        Monto
+                      </div>
+                      <div className="mt-1 text-2xl font-bold text-slate-800">
+                        {formatMoney(payment.amount || 0, payment.currency || "MXN")}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                {payment.status === "REQUIRES_ACTION" && (
+                  <div className="mt-6 border-t border-slate-100 pt-6">
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                      <div className="flex items-start gap-3">
+                        <FaExclamationTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-amber-800">Acción requerida</h4>
+                          <p className="mt-1 text-sm text-amber-700">
+                            Se requiere completar la verificación de este pago.
+                          </p>
+                          <div className="mt-3">
+                            <Link
+                              href={`/app/checkout/${payment.bookingId}`}
+                              className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700"
+                            >
+                              Completar pago
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-white">Tus pagos están protegidos</h3>
-              <p className="mt-1 text-sm text-zinc-400">
-                Todas las transacciones se procesan de forma segura a través de Stripe con encriptación SSL. 
-                Tu información financiera nunca se almacena en nuestros servidores.
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
-      )}
+      ) : null}
     </main>
   );
 }

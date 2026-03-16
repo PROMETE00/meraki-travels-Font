@@ -192,24 +192,21 @@ export default function AdminReservasPage() {
   }
 
   return (
-    <main className="space-y-6 p-6">
+    <main className="space-y-6 p-6 text-slate-900">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Admin · Reservas</h1>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-slate-600">
             Filtra reservas globales y ejecuta acciones manuales con nota operativa.
           </p>
         </div>
 
-        <div className="flex gap-3">
-          <Link href="/app/admin" className="rounded-xl border border-white/10 px-4 py-2 text-sm transition hover:bg-white/10">
-            Dashboard
-          </Link>
+        <div className="flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => void loadBookings()}
             disabled={!canOperate}
-            className="rounded-xl bg-white/10 px-4 py-2 text-sm transition hover:bg-white/15 disabled:opacity-60"
+            className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-500 disabled:opacity-60"
           >
             Actualizar
           </button>

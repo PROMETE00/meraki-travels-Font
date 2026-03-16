@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useCallback } from "react";
 import { useGesture } from "@use-gesture/react";
 
-type ImageItem = string | { src: string; alt?: string };
+type ImageItem = string | { src: string; alt?: string; label?: string; badge?: string; id?: number; linkUrl?: string };
 
 type DomeGalleryProps = {
   images?: ImageItem[];
@@ -24,11 +24,16 @@ type DomeGalleryProps = {
   openedImageBorderRadius?: string;
   grayscale?: boolean;
   autoRotateSpeed?: number; // grados por fotograma
+  onItemClick?: (item: { src: string; alt: string; label: string; badge: string; id?: number; linkUrl?: string }) => void;
 };
 
 type ItemDef = {
   src: string;
   alt: string;
+  label: string;
+  badge: string;
+  id?: number;
+  linkUrl?: string;
   x: number;
   y: number;
   sizeX: number;
@@ -76,6 +81,26 @@ const toPointerKind = (value: string | undefined): PointerKind => {
   return "mouse";
 };
 
+const isLocalMediaUrl = (src: string) => src.startsWith("/media/");
+
+const parseLocalMediaPath = (src: string) => {
+  const match = src.match(/^\/media\/([^/]+)\/([^?#]+)$/);
+  if (!match) return null;
+  return { scope: match[1], filename: decodeURIComponent(match[2]) };
+};
+
+const buildVariantUrl = (src: string, width: number) => {
+  const parsed = parseLocalMediaPath(src);
+  if (!parsed) return src;
+  return `/api/media/${encodeURIComponent(parsed.scope)}/${encodeURIComponent(parsed.filename)}?w=${width}`;
+};
+
+const buildLocalSrcSet = (src: string) => [
+  `${buildVariantUrl(src, 320)} 320w`,
+  `${buildVariantUrl(src, 640)} 640w`,
+  `${buildVariantUrl(src, 1280)} 1280w`,
+].join(", ");
+
 // Genera los items
 function buildItems(pool: ImageItem[], seg: number): ItemDef[] {
   const xCols = Array.from({ length: seg }, (_, i) => -37 + i * 2);
@@ -89,7 +114,7 @@ function buildItems(pool: ImageItem[], seg: number): ItemDef[] {
 
   const totalSlots = coords.length;
   if (pool.length === 0) {
-    return coords.map((c) => ({ ...c, src: "", alt: "" }));
+    return coords.map((c) => ({ ...c, src: "", alt: "", label: "", badge: "" }));
   }
   if (pool.length > totalSlots) {
     console.warn(
@@ -99,9 +124,16 @@ function buildItems(pool: ImageItem[], seg: number): ItemDef[] {
 
   const normalizedImages = pool.map((image) => {
     if (typeof image === "string") {
-      return { src: image, alt: "" };
+      return { src: image, alt: "", label: "", badge: "", id: undefined, linkUrl: undefined };
     }
-    return { src: image.src || "", alt: image.alt || "" };
+    return { 
+      src: image.src || "", 
+      alt: image.alt || "",
+      label: image.label || "",
+      badge: image.badge || "",
+      id: image.id,
+      linkUrl: image.linkUrl
+    };
   });
 
   const usedImages = Array.from({ length: totalSlots }, (_, i) => normalizedImages[i % normalizedImages.length]);
@@ -122,7 +154,11 @@ function buildItems(pool: ImageItem[], seg: number): ItemDef[] {
   return coords.map((c, i) => ({
     ...c,
     src: usedImages[i].src,
-    alt: usedImages[i].alt
+    alt: usedImages[i].alt,
+    label: usedImages[i].label,
+    badge: usedImages[i].badge,
+    id: usedImages[i].id,
+    linkUrl: usedImages[i].linkUrl
   }));
 }
 
@@ -158,7 +194,8 @@ export default function DomeGallery({
   imageBorderRadius = "30px",
   openedImageBorderRadius = "30px",
   grayscale = true,
-  autoRotateSpeed = 0.05 // valor por defecto
+  autoRotateSpeed = 0.05, // valor por defecto
+  onItemClick
 }: DomeGalleryProps) {
   // Referencias principales
   const rootRef = useRef<HTMLDivElement>(null);
@@ -663,11 +700,61 @@ export default function DomeGallery({
     overlay.style.cssText = `position:absolute; left:${frameR.left - mainR.left}px; top:${frameR.top - mainR.top}px; width:${frameR.width}px; height:${frameR.height}px; opacity:0; z-index:30; will-change:transform,opacity; transform-origin:top left; transition:transform ${enlargeTransitionMs}ms ease, opacity ${enlargeTransitionMs}ms ease; border-radius:${openedImageBorderRadius}; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.35);`;
     const rawSrc = parent.dataset.src || (el.querySelector("img") as HTMLImageElement)?.src || "";
     const rawAlt = parent.dataset.alt || (el.querySelector("img") as HTMLImageElement)?.alt || "";
+    const rawLabel = parent.dataset.label || "";
+    const rawBadge = parent.dataset.badge || "";
+    const rawId = parent.dataset.id;
+    const rawLinkUrl = parent.dataset.linkurl || "";
+    
     const img = document.createElement("img");
     img.src = rawSrc;
     img.alt = rawAlt;
     img.style.cssText = `width:100%; height:100%; object-fit:cover; filter:${grayscale ? "grayscale(1)" : "none"};`;
     overlay.appendChild(img);
+    
+    // Content overlay with title and button
+    const contentOverlay = document.createElement("div");
+    contentOverlay.style.cssText = `position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; background:linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 40%, transparent 70%); padding:20px; pointer-events:auto;`;
+    
+    // Label/Title
+    if (rawLabel) {
+      const labelEl = document.createElement("h3");
+      labelEl.textContent = rawLabel;
+      labelEl.style.cssText = `color:white; font-size:1.25rem; font-weight:700; margin:0 0 8px 0; text-shadow:0 2px 4px rgba(0,0,0,0.3);`;
+      contentOverlay.appendChild(labelEl);
+    }
+    
+    // Badge
+    if (rawBadge) {
+      const badgeEl = document.createElement("span");
+      badgeEl.textContent = rawBadge;
+      badgeEl.style.cssText = `display:inline-block; background:linear-gradient(to right, #14b8a6, #10b981); color:white; font-size:0.75rem; font-weight:600; padding:4px 12px; border-radius:9999px; margin-bottom:12px; width:fit-content;`;
+      contentOverlay.appendChild(badgeEl);
+    }
+    
+    // "Ver detalles" button
+    const detailsBtn = document.createElement("button");
+    detailsBtn.textContent = "Ver detalles →";
+    detailsBtn.style.cssText = `background:white; color:#0f172a; font-size:0.875rem; font-weight:600; padding:10px 20px; border:none; border-radius:9999px; cursor:pointer; transition:all 0.2s; width:fit-content; box-shadow:0 4px 12px rgba(0,0,0,0.2);`;
+    detailsBtn.onmouseenter = () => { detailsBtn.style.transform = "scale(1.05)"; detailsBtn.style.background = "#f1f5f9"; };
+    detailsBtn.onmouseleave = () => { detailsBtn.style.transform = "scale(1)"; detailsBtn.style.background = "white"; };
+    detailsBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (onItemClick) {
+        onItemClick({
+          src: rawSrc,
+          alt: rawAlt,
+          label: rawLabel,
+          badge: rawBadge,
+          id: rawId ? parseInt(rawId) : undefined,
+          linkUrl: rawLinkUrl || undefined
+        });
+      } else if (rawLinkUrl) {
+        window.location.href = rawLinkUrl;
+      }
+    };
+    contentOverlay.appendChild(detailsBtn);
+    
+    overlay.appendChild(contentOverlay);
     viewerRef.current!.appendChild(overlay);
     const tx0 = tileR.left - frameR.left;
     const ty0 = tileR.top - frameR.top;
@@ -860,6 +947,10 @@ export default function DomeGallery({
                   className="sphere-item absolute m-auto"
                   data-src={it.src}
                   data-alt={it.alt}
+                  data-label={it.label}
+                  data-badge={it.badge}
+                  data-id={it.id}
+                  data-linkurl={it.linkUrl}
                   data-offset-x={it.x}
                   data-offset-y={it.y}
                   data-size-x={it.sizeX}
@@ -867,7 +958,7 @@ export default function DomeGallery({
                   style={itemStyle}
                 >
                   <div
-                    className="item__image absolute block overflow-hidden cursor-pointer bg-gray-200 transition-transform duration-300"
+                    className="item__image absolute relative block overflow-hidden cursor-pointer bg-gray-200 transition-transform duration-300"
                     role="button"
                     tabIndex={0}
                     aria-label={it.alt || "Open image"}
@@ -893,15 +984,30 @@ export default function DomeGallery({
                     }}
                   >
                     <img
-                      src={it.src}
+                      src={isLocalMediaUrl(it.src) ? buildVariantUrl(it.src, 640) : it.src}
+                      srcSet={isLocalMediaUrl(it.src) ? buildLocalSrcSet(it.src) : undefined}
+                      sizes={isLocalMediaUrl(it.src) ? "(max-width: 768px) 96px, (max-width: 1280px) 128px, 160px" : undefined}
                       draggable={false}
                       alt={it.alt}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover pointer-events-none"
                       style={{
                         backfaceVisibility: "hidden",
                         filter: `var(--image-filter, ${grayscale ? "grayscale(1)" : "none"})`
                       }}
                     />
+                    {/* Label de promoción - barra sólida inferior */}
+                    {it.label && (
+                      <div 
+                        className="absolute bottom-0 left-0 right-0 bg-slate-800 flex items-center justify-center pointer-events-none"
+                        style={{ height: '10%', minHeight: '18px' }}
+                      >
+                        <p className="text-white text-[9px] font-bold text-center truncate px-1">
+                          {it.label}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
                 );

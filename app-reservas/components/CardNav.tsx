@@ -1,136 +1,147 @@
-import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
-// Icono para los enlaces de las tarjetas
 import { GoArrowUpRight } from "react-icons/go";
-// Icono de chevrón para abrir/cerrar el menú (sustituye al hamburguesa)
-import { FiChevronDown } from "react-icons/fi";
-// Hook global para gestionar resultados y estado de carga
-import { http } from "@/lib/http";
-import { useStore } from "@/lib/store";
-import type { SearchResponse } from "@/features/search/types";
+import { FiSearch, FiMapPin, FiDollarSign, FiCompass } from "react-icons/fi";
+import Link from "next/link";
 
-type CardNavLink = {
-  label: string;
-  href: string;
-  ariaLabel: string;
+type SearchResult = {
+  id: number;
+  title: string;
+  description?: string;
+  origin: string;
+  destination: string;
+  price: number;
+  image?: string;
 };
 
-export type CardNavItem = {
+type DestinationResult = {
+  id: number;
+  name: string;
+  image: string;
+  link?: string;
+};
+
+type Suggestion = {
   label: string;
-  bgColor: string;
-  textColor: string;
-  links: CardNavLink[];
+  value?: string;
+  query?: string;
+  icon: string;
+};
+
+type SuggestionsPayload = {
+  destinations: DestinationResult[];
+  budgets: Suggestion[];
+  categories: Suggestion[];
 };
 
 export interface CardNavProps {
-  items: CardNavItem[];
   className?: string;
   ease?: string;
-  baseColor?: string;
-  menuColor?: string;
-  buttonBgColor?: string;
-  buttonTextColor?: string;
 }
 
 /**
- * CardNav genera una barra de navegación translúcida con tarjetas desplegables.
- * Incluye un campo de búsqueda integrado; al enviar la consulta, se llama a
- * `/api/search?q=<query>` y se actualizan los resultados a través del store.
+ * CardNav - Barra de búsqueda inteligente con hover/click toggle
+ * Busca en tiempo real paquetes y destinos
  */
 const CardNav: React.FC<CardNavProps> = ({
-  items,
   className = "",
   ease = "power3.out",
-  menuColor,
-  buttonBgColor,
-  buttonTextColor,
 }) => {
-  // Estado para la animación del menú
-  const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
+  const EMPTY_SUGGESTIONS: SuggestionsPayload = {
+    destinations: [],
+    budgets: [],
+    categories: [],
+  };
+
   const [isExpanded, setIsExpanded] = useState(false);
-  // Estado local del campo de búsqueda
+  const [isPinned, setIsPinned] = useState(false);
   const [query, setQuery] = useState("");
-  // Accedemos al store global para gestionar resultados y estado de carga
-  const { setLoading, setResults, setSearchError } = useStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [destinations, setDestinations] = useState<DestinationResult[]>([]);
+  const [searchType, setSearchType] = useState<string>("empty");
+  const [suggestions, setSuggestions] = useState<SuggestionsPayload>(EMPTY_SUGGESTIONS);
 
   const navRef = useRef<HTMLDivElement | null>(null);
-  const cardsRef = useRef<HTMLDivElement[]>([]);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const tlRef = useRef<gsap.core.Timeline | null>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Calcula la altura del menú desplegado (sin cambios respecto al original)
-  const calculateHeight = () => {
-    const navEl = navRef.current;
-    if (!navEl) return 260;
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://merakitravelsbackend.prome.works";
 
-    const isMobile = window.matchMedia("(max-width: 768px)").matches;
-    if (isMobile) {
-      const contentEl = navEl.querySelector(".card-nav-content") as HTMLElement;
-      if (contentEl) {
-        const wasVisible = contentEl.style.visibility;
-        const wasPointerEvents = contentEl.style.pointerEvents;
-        const wasPosition = contentEl.style.position;
-        const wasHeight = contentEl.style.height;
+  // Cargar sugerencias al montar
+  useEffect(() => {
+    fetch(`${API_URL}/api/search/suggestions`)
+      .then((res) => (res.ok ? res.json() : EMPTY_SUGGESTIONS))
+      .then((data) => {
+        setSuggestions({
+          destinations: Array.isArray(data?.destinations) ? data.destinations : [],
+          budgets: Array.isArray(data?.budgets) ? data.budgets : [],
+          categories: Array.isArray(data?.categories) ? data.categories : [],
+        });
+      })
+      .catch(() => setSuggestions(EMPTY_SUGGESTIONS));
+  }, [API_URL]);
 
-        contentEl.style.visibility = "visible";
-        contentEl.style.pointerEvents = "auto";
-        contentEl.style.position = "static";
-        contentEl.style.height = "auto";
-
-        // Force reflow
-        void contentEl.offsetHeight;
-
-        const topBar = 60;
-        const padding = 16;
-        const contentHeight = contentEl.scrollHeight;
-
-        // Restore original styles
-        contentEl.style.visibility = wasVisible;
-        contentEl.style.pointerEvents = wasPointerEvents;
-        contentEl.style.position = wasPosition;
-        contentEl.style.height = wasHeight;
-
-        return topBar + contentHeight + padding;
-      }
+  // Búsqueda en tiempo real con debounce
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
-    return 260;
-  };
 
-  // Envía la consulta del campo de búsqueda a la API y actualiza el store
-  const handleSearch = async () => {
-    if (!query.trim()) return;
-
-    setLoading(true);
-    setSearchError(null);
-
-    try {
-      const data = await http<SearchResponse>(`/api/search?q=${encodeURIComponent(query.trim())}`);
-      setResults(data.items || []);
-    } catch (err) {
-      console.error(err);
+    if (!query.trim()) {
       setResults([]);
-      setSearchError("No pudimos consultar paquetes desde la búsqueda rápida.");
-    } finally {
-      setLoading(false);
+      setDestinations([]);
+      setSearchType("empty");
+      return;
     }
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/api/search/quick?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        setResults(data.packages || []);
+        setDestinations(data.destinations || []);
+        setSearchType(data.type || "text");
+      } catch {
+        setResults([]);
+        setDestinations([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [query, API_URL]);
+
+  const calculateHeight = () => {
+    if (contentRef.current) {
+      return Math.min(contentRef.current.scrollHeight + 70, 450);
+    }
+    return 350;
   };
 
-  // Crea el timeline de animaciones (igual que el original)
   const createTimeline = useCallback(() => {
     const navEl = navRef.current;
     if (!navEl) return null;
 
-    gsap.set(navEl, { height: 60, overflow: "hidden" });
-    gsap.set(cardsRef.current, { y: 50, opacity: 0 });
+    gsap.set(navEl, { height: 56, overflow: "hidden" });
 
     const tl = gsap.timeline({ paused: true });
-
     tl.to(navEl, {
       height: calculateHeight,
-      duration: 0.4,
+      duration: 0.35,
       ease,
     });
-
-    tl.to(cardsRef.current, { y: 0, opacity: 1, duration: 0.4, ease, stagger: 0.08 }, "-=0.1");
 
     return tl;
   }, [ease]);
@@ -142,128 +153,265 @@ const CardNav: React.FC<CardNavProps> = ({
       tl?.kill();
       tlRef.current = null;
     };
-  }, [createTimeline, items]);
+  }, [createTimeline]);
 
-  // Recalcula alturas al hacer resize
-  useLayoutEffect(() => {
-    const handleResize = () => {
-      if (!tlRef.current) return;
-      if (isExpanded) {
-        const newHeight = calculateHeight();
-        gsap.set(navRef.current, { height: newHeight });
-        tlRef.current.kill();
-        const newTl = createTimeline();
-        if (newTl) {
-          newTl.progress(1);
-          tlRef.current = newTl;
-        }
-      } else {
-        tlRef.current.kill();
-        const newTl = createTimeline();
-        if (newTl) {
-          tlRef.current = newTl;
-        }
-      }
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [createTimeline, isExpanded]);
+  // Actualizar timeline cuando cambia el contenido
+  useEffect(() => {
+    if (isExpanded && tlRef.current) {
+      gsap.to(navRef.current, {
+        height: calculateHeight(),
+        duration: 0.25,
+        ease,
+      });
+    }
+  }, [results, destinations, suggestions, isExpanded, ease]);
 
-  // Alterna la expansión del menú y la rotación del chevrón
-  const toggleMenu = () => {
+  const openMenu = () => {
     const tl = tlRef.current;
-    if (!tl) return;
-    if (!isExpanded) {
-      setIsHamburgerOpen(true);
-      setIsExpanded(true);
-      tl.play(0);
+    if (!tl || isExpanded) return;
+    setIsExpanded(true);
+    tl.play(0);
+  };
+
+  const closeMenu = () => {
+    const tl = tlRef.current;
+    if (!tl || !isExpanded || isPinned) return;
+    tl.eventCallback("onReverseComplete", () => setIsExpanded(false));
+    tl.reverse();
+  };
+
+  const togglePin = () => {
+    if (isPinned) {
+      setIsPinned(false);
+      closeMenu();
     } else {
-      setIsHamburgerOpen(false);
-      tl.eventCallback("onReverseComplete", () => setIsExpanded(false));
-      tl.reverse();
+      setIsPinned(true);
+      openMenu();
     }
   };
 
-  // Guarda referencias a los contenedores de cada tarjeta para animarlos
-  const setCardRef = (i: number) => (el: HTMLDivElement | null) => {
-    if (el) cardsRef.current[i] = el;
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(openMenu, 150);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    if (!isPinned) {
+      hoverTimeoutRef.current = setTimeout(closeMenu, 300);
+    }
+  };
+
+  const handleQuickSearch = (value: string) => {
+    setQuery(value);
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+      minimumFractionDigits: 0
+    }).format(price);
   };
 
   return (
-    <div
-      className={`card-nav-container absolute left-1/2 -translate-x-1/2 w-[90%] max-w-[800px] z-[99]  ${className}`}
-    >
+    <div className={`card-nav-container absolute left-1/2 -translate-x-1/2 w-[92%] max-w-[750px] z-[99] ${className}`}>
       <nav
         ref={navRef}
-        className={`card-nav ${isExpanded ? "open" : ""} block h-[60px] p-0 rounded-xl shadow-md relative overflow-hidden border border-white/10 bg-white/10 backdrop-blur-md will-change-[height]`}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className={`card-nav block h-[56px] rounded-2xl shadow-lg shadow-black/20 relative overflow-hidden border border-white/20 bg-white/10 backdrop-blur-xl will-change-[height] transition-shadow ${
+          isExpanded ? "shadow-2xl shadow-black/30" : ""
+        }`}
       >
-        <div className="px-1 mr-10 card-nav-top absolute inset-x-0 top-0 h-[60px] flex items-center justify-between p-2 pl-[1.1rem] z-[2]">
-          <div
-            className={`mr-4 hamburger-menu group order-2 flex h-full cursor-pointer items-center justify-center transition-transform duration-300 md:order-none ${isHamburgerOpen ? "rotate-180" : ""}`}
-            onClick={toggleMenu}
-            role="button"
-            aria-label={isExpanded ? "Close menu" : "Open menu"}
-            tabIndex={0}
-            style={{ color: menuColor || "#000" }}
-          >
-            <FiChevronDown size={24} aria-hidden="true" />
+        {/* Barra de búsqueda */}
+        <div 
+          className="absolute inset-x-0 top-0 h-[56px] flex items-center gap-3 px-4 z-[2] cursor-pointer"
+          onClick={togglePin}
+        >
+          <div className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${
+            isPinned ? "bg-teal-500 text-white" : "bg-white/20 text-white"
+          }`}>
+            <FiSearch size={16} />
           </div>
-          {/* Área de búsqueda integrada */}
-          <div className="mb-2 flex w-full items-center gap-2 md:w-[730px]">
-            <input
-              type="text"
-              className="text-center flex-1 rounded-lg bg-white/10 px-3 py-2 text-sm outline-none ring-1 ring-white/15 placeholder-white/70 backdrop-blur-sm"
-              placeholder="Busca tu proximo destino o ingresa tu presupuesto"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  void handleSearch();
-                }
-              }}
-            />
+          
+          <input
+            type="text"
+            className="flex-1 bg-transparent text-white text-sm outline-none placeholder-white/70"
+            placeholder="Busca destinos, paquetes o ingresa tu presupuesto..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onClick={(e) => {
+              e.stopPropagation();
+              openMenu();
+            }}
+            onFocus={() => {
+              setIsPinned(true);
+              openMenu();
+            }}
+          />
+          
+          {isLoading && (
+            <div className="w-5 h-5 border-2 border-white/30 border-t-teal-400 rounded-full animate-spin" />
+          )}
+          
+          {query && !isLoading && (
             <button
-              type="button"
-              onClick={() => void handleSearch()}
-              className="rounded-lg px-3 py-2 text-xs font-medium text-white transition hover:bg-white/10"
-              style={{ backgroundColor: buttonBgColor || "#111", color: buttonTextColor || "#fff" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setQuery("");
+              }}
+              className="text-white/70 hover:text-white text-sm px-2"
             >
-              Buscar
+              ✕
             </button>
-          </div>
+          )}
         </div>
 
+        {/* Contenido expandible */}
         <div
-          className={`card-nav-content absolute left-0 right-0 top-[60px] bottom-0 p-2 flex flex-col items-stretch gap-2 justify-start z-[1] ${
-            isExpanded ? "visible pointer-events-auto" : "invisible pointer-events-none"
-          } md:flex-row md:items-end md:gap-[12px]`}
-          aria-hidden={!isExpanded}
+          ref={contentRef}
+          className={`absolute left-0 right-0 top-[56px] p-4 bg-white/95 backdrop-blur-xl border-t border-white/20 ${
+            isExpanded ? "visible" : "invisible"
+          }`}
         >
-          {(items || []).slice(0, 3).map((item, idx) => (
-            <div
-              key={`${item.label}-${idx}`}
-              className="nav-card select-none relative flex flex-col gap-2 p-[12px_16px] rounded-[calc(0.75rem-0.2rem)] min-w-0 flex-[1_1_auto] h-auto min-h-[60px] md:h-full md:min-h-0 md:flex-[1_1_0%]"
-              ref={setCardRef(idx)}
-              style={{ backgroundColor: item.bgColor, color: item.textColor }}
-            >
-              <div className="nav-card-label font-normal tracking-[-0.5px] text-[18px] md:text-[22px]">
-                {item.label}
-              </div>
-              <div className="nav-card-links mt-auto flex flex-col gap-[2px]">
-                {item.links?.map((lnk, i) => (
-                  <a
-                    key={`${lnk.label}-${i}`}
-                    className="nav-card-link inline-flex items-center gap-[6px] no-underline cursor-pointer transition-opacity duration-300 hover:opacity-75 text-[15px] md:text-[16px]"
-                    href={lnk.href}
-                    aria-label={lnk.ariaLabel}
-                  >
-                    <GoArrowUpRight className="nav-card-link-icon shrink-0" aria-hidden="true" />
-                    {lnk.label}
-                  </a>
-                ))}
-              </div>
+          {/* Resultados de búsqueda */}
+          {query && (results.length > 0 || destinations.length > 0) ? (
+            <div className="space-y-4">
+              {searchType === "budget" && (
+                <p className="text-xs text-slate-500 px-1">
+                  📊 Mostrando paquetes dentro de tu presupuesto
+                </p>
+              )}
+              
+              {/* Paquetes encontrados */}
+              {results.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 px-1">
+                    Paquetes
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {results.slice(0, 4).map((pkg) => (
+                      <Link
+                        key={pkg.id}
+                        href={`/paquetes/${pkg.id}`}
+                        className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 hover:bg-teal-50 border border-slate-100 hover:border-teal-200 transition-all group"
+                      >
+                        {pkg.image ? (
+                          <img
+                            src={pkg.image}
+                            alt={pkg.title}
+                            className="w-12 h-12 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center">
+                            <FiCompass className="text-teal-600" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-700 truncate group-hover:text-teal-700">
+                            {pkg.title}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {pkg.origin} → {pkg.destination}
+                          </p>
+                        </div>
+                        <span className="text-sm font-bold text-teal-600">
+                          {formatPrice(pkg.price)}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Destinos encontrados */}
+              {destinations.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 px-1">
+                    Destinos
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    {destinations.map((dest) => (
+                      <Link
+                        key={dest.id}
+                        href={dest.link || `/paquetes?destino=${dest.name}`}
+                        className="flex items-center gap-2 px-3 py-2 rounded-full bg-slate-100 hover:bg-teal-100 hover:text-teal-700 transition-all text-sm text-slate-600"
+                      >
+                        <FiMapPin size={14} />
+                        {dest.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          ))}
+          ) : query && !isLoading ? (
+            <div className="text-center py-6">
+              <p className="text-slate-500 text-sm">No encontramos resultados para "{query}"</p>
+              <p className="text-slate-400 text-xs mt-1">Intenta con otro término o presupuesto</p>
+            </div>
+          ) : (
+            /* Sugerencias cuando no hay búsqueda */
+            suggestions && (
+              <div className="space-y-4">
+                {/* Destinos populares */}
+                <div>
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 px-1 flex items-center gap-2">
+                    <FiMapPin size={12} /> Destinos Populares
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    {(suggestions?.destinations ?? []).slice(0, 5).map((dest) => (
+                      <button
+                        key={dest.id}
+                        onClick={() => handleQuickSearch(dest.name)}
+                      >
+                        {dest.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Presupuestos sugeridos */}
+                <div>
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 px-1 flex items-center gap-2">
+                    <FiDollarSign size={12} /> Por Presupuesto
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    {(suggestions?.budgets ?? []).map((budget, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleQuickSearch(budget.value || "")}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-all text-sm"
+                      >
+                        <span>{budget.icon}</span>
+                        {budget.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Categorías */}
+                <div>
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 px-1 flex items-center gap-2">
+                    <FiCompass size={12} /> Categorías
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    {(suggestions?.categories ?? []).map((cat, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleQuickSearch(cat.query || "")}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-50 hover:bg-sky-100 text-sky-700 transition-all text-sm"
+                      >
+                        <span>{cat.icon}</span>
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )
+          )}
         </div>
       </nav>
     </div>
