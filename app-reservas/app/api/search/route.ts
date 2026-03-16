@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { getBackendBaseUrl } from "@/lib/backend-base-url";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const backendBaseUrl = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
+  const backendBaseUrl = getBackendBaseUrl();
 
   try {
     const backendUrl = new URL("/api/packages/search", backendBaseUrl);

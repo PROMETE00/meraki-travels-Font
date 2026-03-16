@@ -34,9 +34,15 @@ export function isHttpErrorStatus(error: unknown, status: number): error is Http
 
 export async function http<T>(url: string, opts?: RequestInit): Promise<T> {
   const res = await fetch(url, { ...opts });
+  const text = await res.text();
+
   if (!res.ok) {
-    const text = await res.text();
     throw new HttpError(res.status, extractErrorMessage(text, res.status), text);
   }
-  return res.json() as Promise<T>;
+
+  if (!text.trim()) {
+    return undefined as T;
+  }
+
+  return JSON.parse(text) as T;
 }

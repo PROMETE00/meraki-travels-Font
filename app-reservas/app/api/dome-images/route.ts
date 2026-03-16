@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
+import { getBackendBaseUrl } from "@/lib/backend-base-url";
 
 export const revalidate = 120;
 
 export async function GET() {
-  const backendBaseUrl =
-    process.env.INTERNAL_API_BASE_URL ?? "https://merakitravelsbackend.prome.works";
+  const backendBaseUrl = getBackendBaseUrl();
 
   try {
     const backendUrl = new URL("/api/dome-images", backendBaseUrl);

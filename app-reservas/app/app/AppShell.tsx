@@ -69,7 +69,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   function handleLogout() {
     setMobileMenuOpen(false);
     logout();
-    router.push("/app/acceder");
+    router.push("/");
   }
 
   const menuItems = canOperate

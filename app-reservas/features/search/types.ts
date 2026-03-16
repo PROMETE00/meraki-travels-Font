@@ -107,6 +107,38 @@ export type AdminBannerItem = {
   updatedAt: string;
 };
 
+export type AdminPromotionItem = {
+  id: number;
+  title: string;
+  subtitle: string | null;
+  description: string | null;
+  imageUrl: string;
+  linkUrl: string | null;
+  orderIndex: number;
+  isActive: boolean;
+  visibleInPromotions: boolean;
+  visibleInDestinations: boolean;
+  visibleInPackages: boolean;
+  featuredInDome: boolean;
+  packageIds: number[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminDestinationItem = {
+  id: number;
+  name: string;
+  slug: string;
+  country: string | null;
+  summary: string | null;
+  heroImageUrl: string | null;
+  active: boolean;
+  packageIds: number[];
+  promotionIds: number[];
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type AdminDashboardMetrics = {
   totalCustomers: number;
   totalBookings: number;

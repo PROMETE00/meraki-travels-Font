@@ -24,7 +24,7 @@ type NocoDbListResponse = {
 
 const baseUrl  = process.env.NOCODB_BASE_URL!;
 const sharedId = process.env.NOCODB_SHARED_VIEW_ID || "";
-const svPwd    = process.env.NOCODB_SHARED_VIEW_PWD || ""; // opcional
+const svPwd    = process.env.NOCODB_SHARED_VIEW_PWD || process.env.NOCODB_SHARED_VIEW_PASSWORD || ""; // opcional
 
 export async function fetchImages(
   ownerTable: string,

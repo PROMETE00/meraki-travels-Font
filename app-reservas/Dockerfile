@@ -15,6 +15,8 @@ RUN \
 FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 ENV NODE_ENV=production
+ARG INTERNAL_API_BASE_URL=https://merakitravelsbackend.prome.works
+ENV INTERNAL_API_BASE_URL=${INTERNAL_API_BASE_URL}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Si algo trae binarios nativos, puedes forzar reconstrucción:
