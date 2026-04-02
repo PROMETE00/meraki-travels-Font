@@ -3,17 +3,26 @@ services:
     build:
       context: .
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://merakitravelsbackend.prome.works}
     container_name: meraki-frontend-app
     restart: always
     environment:
-      PORT: ${PORT:-3000}
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+      PORT: ${PORT:-3005}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://merakitravelsbackend.prome.works}
       INTERNAL_API_BASE_URL: ${INTERNAL_API_BASE_URL:-http://host.docker.internal:8080}
       DATABASE_URL: ${DATABASE_URL}
       NOCODB_BASE_URL: ${NOCODB_BASE_URL}
       NOCODB_SHARED_VIEW_ID: ${NOCODB_SHARED_VIEW_ID}
     ports:
-      - "${HOST_PORT:-3000}:${PORT:-3000}"
+      - "${HOST_PORT:-3005}:${PORT:-3005}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: meraki-frontend-tunnel
+    restart: always
+    network_mode: "service:app"
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARED_TOKEN}
+    command: tunnel --no-autoupdate --protocol http2 run

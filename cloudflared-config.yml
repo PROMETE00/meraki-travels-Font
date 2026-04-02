@@ -1,7 +1,5 @@
 # cloudflared-config.yml
 ingress:
-  - hostname: reservas.prome.works
-    service: http://app:3000
-  - hostname: nocodb.prome.works
-    service: http://nocodb:8080
+  - hostname: merakitravels.prome.works
+    service: http://app:3005
   - service: http_status:404

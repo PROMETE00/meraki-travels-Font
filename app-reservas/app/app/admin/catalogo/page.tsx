@@ -723,13 +723,13 @@ export default function AdminCatalogoPage() {
 
               <div className="grid gap-3">
                 <div className="grid gap-3 md:grid-cols-2">
-                  <input value={destinationForm.name} onChange={(event) => setDestinationForm((c) => ({ ...c, name: event.target.value }))} className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Nombre destino" />
-                  <input value={destinationForm.slug} onChange={(event) => setDestinationForm((c) => ({ ...c, slug: event.target.value }))} className="rounded-xl border border-slate-200 px-3 py-2" placeholder="slug-destino" />
+                  <input value={destinationForm.name} onChange={(event) => setDestinationForm((c) => ({ ...c, name: event.target.value }))} className="app-input" placeholder="Nombre destino" />
+                  <input value={destinationForm.slug} onChange={(event) => setDestinationForm((c) => ({ ...c, slug: event.target.value }))} className="app-input" placeholder="slug-destino" />
                 </div>
-                <input value={destinationForm.country} onChange={(event) => setDestinationForm((c) => ({ ...c, country: event.target.value }))} className="rounded-xl border border-slate-200 px-3 py-2" placeholder="País" />
-                <textarea value={destinationForm.summary} onChange={(event) => setDestinationForm((c) => ({ ...c, summary: event.target.value }))} className="min-h-24 rounded-xl border border-slate-200 px-3 py-2" placeholder="Resumen del destino" />
-                <input value={destinationForm.heroImageUrl} onChange={(event) => setDestinationForm((c) => ({ ...c, heroImageUrl: event.target.value }))} className="rounded-xl border border-slate-200 px-3 py-2" placeholder="URL imagen portada destino" />
-                <label className="cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 w-fit">
+                <input value={destinationForm.country} onChange={(event) => setDestinationForm((c) => ({ ...c, country: event.target.value }))} className="app-input" placeholder="País" />
+                <textarea value={destinationForm.summary} onChange={(event) => setDestinationForm((c) => ({ ...c, summary: event.target.value }))} className="min-h-24 app-input" placeholder="Resumen del destino" />
+                <input value={destinationForm.heroImageUrl} onChange={(event) => setDestinationForm((c) => ({ ...c, heroImageUrl: event.target.value }))} className="app-input" placeholder="URL imagen portada destino" />
+                <label className="app-secondary-button cursor-pointer w-fit">
                   {uploadingScope === "packages" ? "Subiendo..." : "Subir portada"}
                   <input
                     type="file"
@@ -747,7 +747,7 @@ export default function AdminCatalogoPage() {
                 </label>
 
                 <div className="grid gap-3 md:grid-cols-2">
-                  <div className="rounded-xl border border-slate-200 p-3">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
                     <div className="mb-2 text-sm font-medium text-slate-700">Paquetes del destino</div>
                     <div className="max-h-40 overflow-y-auto space-y-2">
                       {sortedPackages.map((item) => (
@@ -759,7 +759,7 @@ export default function AdminCatalogoPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-slate-200 p-3">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
                     <div className="mb-2 text-sm font-medium text-slate-700">Promociones del destino</div>
                     <div className="max-h-40 overflow-y-auto space-y-2">
                       {sortedPromotions.map((item) => (
@@ -777,19 +777,19 @@ export default function AdminCatalogoPage() {
                   Activo
                 </label>
 
-                <button type="button" onClick={() => void submitDestination()} disabled={savingDestination} className="rounded-xl bg-[#4C5372] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4C5372]/90 disabled:opacity-60">
+                <button type="button" onClick={() => void submitDestination()} disabled={savingDestination} className="app-primary-button">
                   {savingDestination ? "Guardando..." : destinationForm.id ? "Actualizar destino" : "Crear destino"}
                 </button>
               </div>
 
               <div className="grid gap-3">
                 {sortedDestinations.map((item) => (
-                  <article key={item.id} className="rounded-xl border border-slate-200 bg-[#FFFDF6] p-4">
+                   <article key={item.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <div className="font-medium">{item.name}</div>
-                        <div className="text-xs text-slate-500">/{item.slug} · {item.country || "Sin país"}</div>
-                        <div className="text-xs text-slate-500">{item.packageIds.length} paquetes · {item.promotionIds.length} promociones</div>
+                         <div className="text-xs text-slate-500">/{item.slug} · {item.country || "Sin país"}</div>
+                         <div className="text-xs text-slate-500">{item.packageIds.length} paquetes · {item.promotionIds.length} promociones</div>
                       </div>
                       <div className="flex gap-2">
                         <button type="button" onClick={() => setDestinationForm({ id: item.id, name: item.name, slug: item.slug, country: item.country ?? "", summary: item.summary ?? "", heroImageUrl: item.heroImageUrl ?? "", active: item.active, packageIds: item.packageIds, promotionIds: item.promotionIds })} className="rounded-lg border border-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-slate-50">Editar</button>
@@ -802,24 +802,24 @@ export default function AdminCatalogoPage() {
             </section>
           ) : null}
 
-          {activeTab === "banners" ? (
-            <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+           {activeTab === "banners" ? (
+             <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Banners de fondo</h2>
                 <button type="button" onClick={() => setBannerForm(emptyBannerForm)} className="text-sm text-slate-500 underline">Nuevo</button>
               </div>
 
               <div className="grid gap-3">
-                <input value={bannerForm.title} onChange={(event) => setBannerForm((c) => ({ ...c, title: event.target.value }))} className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Título" />
-                <input value={bannerForm.subtitle} onChange={(event) => setBannerForm((c) => ({ ...c, subtitle: event.target.value }))} className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Subtítulo" />
-                <input value={bannerForm.altText} onChange={(event) => setBannerForm((c) => ({ ...c, altText: event.target.value }))} className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Texto alternativo" />
-                <input value={bannerForm.linkUrl} onChange={(event) => setBannerForm((c) => ({ ...c, linkUrl: event.target.value }))} className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Link" />
-                <input value={bannerForm.imageUrl} onChange={(event) => setBannerForm((c) => ({ ...c, imageUrl: event.target.value }))} className="rounded-xl border border-slate-200 px-3 py-2" placeholder="URL imagen" />
+                 <input value={bannerForm.title} onChange={(event) => setBannerForm((c) => ({ ...c, title: event.target.value }))} className="app-input" placeholder="Título" />
+                 <input value={bannerForm.subtitle} onChange={(event) => setBannerForm((c) => ({ ...c, subtitle: event.target.value }))} className="app-input" placeholder="Subtítulo" />
+                 <input value={bannerForm.altText} onChange={(event) => setBannerForm((c) => ({ ...c, altText: event.target.value }))} className="app-input" placeholder="Texto alternativo" />
+                 <input value={bannerForm.linkUrl} onChange={(event) => setBannerForm((c) => ({ ...c, linkUrl: event.target.value }))} className="app-input" placeholder="Link" />
+                 <input value={bannerForm.imageUrl} onChange={(event) => setBannerForm((c) => ({ ...c, imageUrl: event.target.value }))} className="app-input" placeholder="URL imagen" />
                 <div className="grid gap-3 md:grid-cols-[1fr_auto]">
                   <input value={bannerForm.orderIndex} onChange={(event) => setBannerForm((c) => ({ ...c, orderIndex: event.target.value }))} type="number" min="0" className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Orden" />
                   <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={bannerForm.isActive} onChange={(event) => setBannerForm((c) => ({ ...c, isActive: event.target.checked }))} /> Activo</label>
                 </div>
-                <label className="cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 w-fit">
+                 <label className="app-secondary-button cursor-pointer w-fit">
                   {uploadingScope === "banners" ? "Subiendo..." : "Subir imagen"}
                   <input
                     type="file"
@@ -835,17 +835,17 @@ export default function AdminCatalogoPage() {
                     }}
                   />
                 </label>
-                <button type="button" onClick={() => void submitBanner()} disabled={savingBanner} className="rounded-xl bg-[#4C5372] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4C5372]/90 disabled:opacity-60">
+                 <button type="button" onClick={() => void submitBanner()} disabled={savingBanner} className="app-primary-button">
                   {savingBanner ? "Guardando..." : bannerForm.id ? "Actualizar banner" : "Crear banner"}
                 </button>
               </div>
 
               <div className="grid gap-3">
                 {sortedBanners.map((item) => (
-                  <article key={item.id} className="rounded-xl border border-slate-200 bg-[#FFFDF6] p-4">
+                   <article key={item.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <button type="button" onClick={() => setBannerForm({ id: item.id, title: item.title ?? "", subtitle: item.subtitle ?? "", altText: item.altText ?? "", linkUrl: item.linkUrl ?? "", imageUrl: item.imageUrl, orderIndex: String(item.orderIndex), isActive: item.isActive })} className="flex flex-1 gap-3 text-left">
-                        <img src={item.imageUrl} alt={item.altText || item.title || "Banner"} className="h-16 w-20 rounded-lg border border-slate-200 object-cover" />
+                         <img src={item.imageUrl} alt={item.altText || item.title || "Banner"} className="h-16 w-20 rounded-lg border border-slate-200 object-cover" />
                         <div>
                           <div className="font-medium">{item.title || "Banner sin título"}</div>
                           <div className="text-xs text-slate-500">Orden {item.orderIndex}</div>
@@ -863,22 +863,22 @@ export default function AdminCatalogoPage() {
             </section>
           ) : null}
 
-          {activeTab === "promociones" ? (
-            <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+           {activeTab === "promociones" ? (
+             <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Promociones</h2>
                 <button type="button" onClick={() => setPromotionForm(emptyPromotionForm)} className="text-sm text-slate-500 underline">Nueva</button>
               </div>
 
               <div className="grid gap-3">
-                <input value={promotionForm.title} onChange={(event) => setPromotionForm((c) => ({ ...c, title: event.target.value }))} className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Título" />
-                <input value={promotionForm.subtitle} onChange={(event) => setPromotionForm((c) => ({ ...c, subtitle: event.target.value }))} className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Subtítulo" />
-                <textarea value={promotionForm.description} onChange={(event) => setPromotionForm((c) => ({ ...c, description: event.target.value }))} className="min-h-24 rounded-xl border border-slate-200 px-3 py-2" placeholder="Descripción" />
-                <input value={promotionForm.imageUrl} onChange={(event) => setPromotionForm((c) => ({ ...c, imageUrl: event.target.value }))} className="rounded-xl border border-slate-200 px-3 py-2" placeholder="URL imagen" />
-                <input value={promotionForm.linkUrl} onChange={(event) => setPromotionForm((c) => ({ ...c, linkUrl: event.target.value }))} className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Link" />
-                <input value={promotionForm.orderIndex} onChange={(event) => setPromotionForm((c) => ({ ...c, orderIndex: event.target.value }))} type="number" min="0" className="rounded-xl border border-slate-200 px-3 py-2" placeholder="Orden" />
+                 <input value={promotionForm.title} onChange={(event) => setPromotionForm((c) => ({ ...c, title: event.target.value }))} className="app-input" placeholder="Título" />
+                 <input value={promotionForm.subtitle} onChange={(event) => setPromotionForm((c) => ({ ...c, subtitle: event.target.value }))} className="app-input" placeholder="Subtítulo" />
+                 <textarea value={promotionForm.description} onChange={(event) => setPromotionForm((c) => ({ ...c, description: event.target.value }))} className="min-h-24 app-input" placeholder="Descripción" />
+                 <input value={promotionForm.imageUrl} onChange={(event) => setPromotionForm((c) => ({ ...c, imageUrl: event.target.value }))} className="app-input" placeholder="URL imagen" />
+                 <input value={promotionForm.linkUrl} onChange={(event) => setPromotionForm((c) => ({ ...c, linkUrl: event.target.value }))} className="app-input" placeholder="Link" />
+                 <input value={promotionForm.orderIndex} onChange={(event) => setPromotionForm((c) => ({ ...c, orderIndex: event.target.value }))} type="number" min="0" className="app-input" placeholder="Orden" />
 
-                <label className="cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 w-fit">
+                 <label className="app-secondary-button cursor-pointer w-fit">
                   {uploadingScope === "banners" ? "Subiendo..." : "Subir imagen"}
                   <input
                     type="file"
@@ -896,11 +896,11 @@ export default function AdminCatalogoPage() {
                 </label>
 
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={promotionForm.isActive} onChange={(event) => setPromotionForm((c) => ({ ...c, isActive: event.target.checked }))} /> Activa</label>
-                  <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={promotionForm.visibleInPromotions} onChange={(event) => setPromotionForm((c) => ({ ...c, visibleInPromotions: event.target.checked }))} /> Visible en listado promociones</label>
-                  <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={promotionForm.visibleInDestinations} onChange={(event) => setPromotionForm((c) => ({ ...c, visibleInDestinations: event.target.checked }))} /> Visible en destinos</label>
-                  <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={promotionForm.visibleInPackages} onChange={(event) => setPromotionForm((c) => ({ ...c, visibleInPackages: event.target.checked }))} /> Visible en paquetes</label>
-                  <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={promotionForm.featuredInDome} onChange={(event) => setPromotionForm((c) => ({ ...c, featuredInDome: event.target.checked }))} /> Marcar para Dome</label>
+                   <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={promotionForm.isActive} onChange={(event) => setPromotionForm((c) => ({ ...c, isActive: event.target.checked }))} /> Activa</label>
+                   <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={promotionForm.visibleInPromotions} onChange={(event) => setPromotionForm((c) => ({ ...c, visibleInPromotions: event.target.checked }))} /> Visible en listado promociones</label>
+                   <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={promotionForm.visibleInDestinations} onChange={(event) => setPromotionForm((c) => ({ ...c, visibleInDestinations: event.target.checked }))} /> Visible en destinos</label>
+                   <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={promotionForm.visibleInPackages} onChange={(event) => setPromotionForm((c) => ({ ...c, visibleInPackages: event.target.checked }))} /> Visible en paquetes</label>
+                   <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={promotionForm.featuredInDome} onChange={(event) => setPromotionForm((c) => ({ ...c, featuredInDome: event.target.checked }))} /> Marcar para Dome</label>
                 </div>
 
                 <div className="rounded-xl border border-slate-200 p-3">
@@ -915,14 +915,14 @@ export default function AdminCatalogoPage() {
                   </div>
                 </div>
 
-                <button type="button" onClick={() => void submitPromotion()} disabled={savingPromotion} className="rounded-xl bg-[#4C5372] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4C5372]/90 disabled:opacity-60">
+                 <button type="button" onClick={() => void submitPromotion()} disabled={savingPromotion} className="app-primary-button">
                   {savingPromotion ? "Guardando..." : promotionForm.id ? "Actualizar promoción" : "Crear promoción"}
                 </button>
               </div>
 
               <div className="grid gap-3">
                 {sortedPromotions.map((item) => (
-                  <article key={item.id} className="rounded-xl border border-slate-200 bg-[#FFFDF6] p-4">
+                   <article key={item.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <button
                         type="button"
@@ -945,7 +945,7 @@ export default function AdminCatalogoPage() {
                         }
                         className="flex flex-1 gap-3 text-left"
                       >
-                        <img src={item.imageUrl} alt={item.title} className="h-16 w-20 rounded-lg border border-slate-200 object-cover" />
+                         <img src={item.imageUrl} alt={item.title} className="h-16 w-20 rounded-lg border border-slate-200 object-cover" />
                         <div>
                           <div className="font-medium">{item.title}</div>
                           <div className="text-xs text-slate-500">{item.packageIds.length} paquetes · orden {item.orderIndex}</div>
@@ -972,8 +972,8 @@ export default function AdminCatalogoPage() {
               <p className="text-sm text-slate-600">Administra visibilidad del paquete y decide si lo conviertes en promoción reutilizable.</p>
 
               <div className="grid gap-3">
-                {sortedPackages.map((item) => (
-                  <article key={item.id} className="rounded-xl border border-slate-200 bg-[#FFFDF6] p-4">
+                 {sortedPackages.map((item) => (
+                   <article key={item.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="font-medium">{item.title}</div>

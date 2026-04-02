@@ -66,11 +66,11 @@ export default function AdminDashboardPage() {
   }, [hydrated, loadDashboard]);
 
   return (
-    <main className="space-y-6 overflow-x-hidden text-slate-900">
+    <main className="app-page">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Admin · Panel operativo</h1>
-          <p className="text-sm text-[#7C7E9D]">
+          <h1 className="app-title">Admin · Panel operativo</h1>
+          <p className="app-subtitle">
             Vista rápida de clientes, reservas y señales financieras del sistema.
           </p>
         </div>
@@ -80,18 +80,18 @@ export default function AdminDashboardPage() {
             type="button"
             onClick={() => void loadDashboard()}
             disabled={!canOperate}
-            className="rounded-xl bg-[#4C5372] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4C5372]/90 disabled:opacity-60"
+            className="app-primary-button"
           >
             Actualizar
           </button>
         </div>
       </div>
 
-      {error ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
-      {!hydrated ? <div className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-6 text-sm text-[#4C5372]">Cargando sesión...</div> : null}
-      {hydrated && !customer ? <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-700">Necesitas iniciar sesión.</div> : null}
-      {hydrated && customer && !canOperate ? <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">Tu cuenta no tiene permisos para este panel.</div> : null}
-      {hydrated && canOperate && loading ? <div className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-6 text-sm text-[#4C5372]">Cargando dashboard...</div> : null}
+      {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+      {!hydrated ? <div className="app-surface p-6 text-sm text-slate-600">Cargando sesión...</div> : null}
+      {hydrated && !customer ? <div className="app-surface p-6 text-sm text-amber-700">Necesitas iniciar sesión.</div> : null}
+      {hydrated && customer && !canOperate ? <div className="app-surface p-6 text-sm text-rose-700">Tu cuenta no tiene permisos para este panel.</div> : null}
+      {hydrated && canOperate && loading ? <div className="app-surface p-6 text-sm text-slate-600">Cargando dashboard...</div> : null}
 
       {dashboard ? (
         <>
@@ -103,20 +103,20 @@ export default function AdminDashboardPage() {
           </section>
 
           <section className="grid gap-6 xl:grid-cols-2">
-            <div className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm">
+            <div className="app-surface-soft p-5">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Reservas recientes</h2>
-                <span className="text-xs uppercase tracking-[0.2em] text-[#949AB1]">
+                  <span className="text-xs uppercase tracking-[0.2em] text-slate-500">
                   {dashboard.metrics.cancelledBookings} canceladas
                 </span>
               </div>
 
               <div className="grid gap-3">
                 {dashboard.recentBookings.map((booking) => (
-                  <article key={booking.id} className="rounded-xl border border-[#E2D4E0] bg-[#FFFDF6] p-4">
+                    <article key={booking.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex items-center justify-between gap-3">
                       <div className="font-medium">{booking.packageTitle}</div>
-                       <span className="rounded-full bg-[#E2D4E0] px-2 py-1 text-xs text-[#4C5372]">{booking.status}</span>
+                        <span className="rounded-full bg-teal-50 px-2 py-1 text-xs text-teal-700">{booking.status}</span>
                     </div>
                     <div className="mt-2 text-sm text-[#7C7E9D]">
                       {booking.customerName} · {booking.customerEmail}
@@ -132,20 +132,20 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm">
+            <div className="app-surface-soft p-5">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Clientes recientes</h2>
-                <span className="text-xs uppercase tracking-[0.2em] text-[#949AB1]">
+                  <span className="text-xs uppercase tracking-[0.2em] text-slate-500">
                   {dashboard.metrics.totalPayments} pagos registrados
                 </span>
               </div>
 
               <div className="grid gap-3">
                 {dashboard.recentCustomers.map((item) => (
-                  <article key={item.id} className="rounded-xl border border-[#E2D4E0] bg-[#FFFDF6] p-4">
+                    <article key={item.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex items-center justify-between gap-3">
                       <div className="font-medium">{item.fullName}</div>
-                       <span className="rounded-full bg-[#E2D4E0] px-2 py-1 text-xs text-[#4C5372]">{item.role}</span>
+                        <span className="rounded-full bg-teal-50 px-2 py-1 text-xs text-teal-700">{item.role}</span>
                     </div>
                     <div className="mt-2 text-sm text-[#7C7E9D]">{item.email}</div>
                     <div className="mt-1 text-sm text-[#7C7E9D]">{item.phone || "Sin teléfono"}</div>
@@ -163,10 +163,10 @@ export default function AdminDashboardPage() {
 
 function MetricCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <article className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm">
-      <div className="text-xs uppercase tracking-[0.2em] text-[#949AB1]">{label}</div>
+    <article className="app-surface-soft p-5">
+      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">{label}</div>
       <div className="mt-3 text-2xl font-bold">{value}</div>
-      <div className="mt-2 text-sm text-[#7C7E9D]">{detail}</div>
+      <div className="mt-2 text-sm text-slate-600">{detail}</div>
     </article>
   );
 }

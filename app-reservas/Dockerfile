@@ -43,5 +43,9 @@ COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY package.json .
-EXPOSE 3000
+EXPOSE 3005
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD node -e "const http=require('http');const port=process.env.PORT||3005;const req=http.get({host:'127.0.0.1',port,path:'/'},res=>process.exit(res.statusCode && res.statusCode < 500 ? 0 : 1));req.on('error',()=>process.exit(1));"
+
 CMD ["npm", "run", "start"]

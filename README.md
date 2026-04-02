@@ -35,7 +35,7 @@ cp .env.example .env
 docker-compose up -d --build
 ```
 
-- **App:** [http://localhost:3000](http://localhost:3000)
+- **App:** [http://localhost:3005](http://localhost:3005)
 
 ---
 

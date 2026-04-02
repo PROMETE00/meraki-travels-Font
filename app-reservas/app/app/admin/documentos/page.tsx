@@ -294,20 +294,20 @@ export default function AdminDocumentosPage() {
   }
 
   return (
-    <main className="space-y-6">
-      <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h1 className="text-2xl font-bold text-slate-900">Admin · Documentos importantes</h1>
-        <p className="mt-1 text-sm text-slate-600">
+    <main className="app-page space-y-6 p-6">
+      <header className="app-surface p-5">
+        <h1 className="app-title">Admin · Documentos importantes</h1>
+        <p className="app-subtitle mt-1">
           Asigna y cambia documentos por usuario específico para que el cliente los vea de forma dinámica.
         </p>
       </header>
 
       {message ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
-      {error ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
-      {loading ? <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">Cargando documentos...</div> : null}
+      {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+      {loading ? <div className="app-surface p-6 text-sm text-slate-500">Cargando documentos...</div> : null}
 
       <section className="grid gap-6 xl:grid-cols-[320px_1fr]">
-        <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <aside className="app-surface space-y-4 p-5">
           <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-600">Usuarios</h2>
           <select
             value={selectedCustomerId}
@@ -315,7 +315,7 @@ export default function AdminDocumentosPage() {
               setSelectedCustomerId(event.target.value);
               setForm((current) => ({ ...current, customerId: event.target.value }));
             }}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            className="app-input w-full text-sm text-slate-800"
           >
             <option value="">Todos</option>
             {customers.map((item) => (
@@ -334,7 +334,7 @@ export default function AdminDocumentosPage() {
                   setSelectedCustomerId(String(item.id));
                   setForm((current) => ({ ...current, customerId: String(item.id) }));
                 }}
-                className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${
+            className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${
                   selectedCustomerId === String(item.id)
                     ? "border-teal-300 bg-teal-50 text-teal-800"
                     : "border-slate-200 bg-white text-slate-700 hover:border-teal-200 hover:bg-teal-50"
@@ -348,7 +348,7 @@ export default function AdminDocumentosPage() {
         </aside>
 
         <div className="space-y-4">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="app-surface p-5">
             <h2 className="mb-4 text-lg font-semibold text-slate-900">{form.id ? "Editar documento" : "Asignar documento"}</h2>
             <div className="grid gap-4 md:grid-cols-2">
               <label className="grid gap-2 text-sm">
@@ -356,7 +356,7 @@ export default function AdminDocumentosPage() {
                 <select
                   value={form.customerId}
                   onChange={(event) => setForm((current) => ({ ...current, customerId: event.target.value }))}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                    className="app-input"
                 >
                   <option value="">Selecciona un cliente</option>
                   {customers.map((item) => (
@@ -373,7 +373,7 @@ export default function AdminDocumentosPage() {
                   value={form.title}
                   onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
                   placeholder="Ej. Voucher hotel Cancún"
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                   className="app-input"
                 />
               </label>
 
@@ -382,7 +382,7 @@ export default function AdminDocumentosPage() {
                 <select
                   value={form.type}
                   onChange={(event) => setForm((current) => ({ ...current, type: event.target.value as ImportantDocumentItem["type"] }))}
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                   className="app-input"
                 >
                   {typeOptions.map((option) => (
                     <option key={option} value={option}>
@@ -399,7 +399,7 @@ export default function AdminDocumentosPage() {
                   onChange={(event) =>
                     setForm((current) => ({ ...current, category: event.target.value as ImportantDocumentItem["category"] }))
                   }
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                   className="app-input"
                 >
                   {categoryOptions.map((option) => (
                     <option key={option} value={option}>
@@ -415,7 +415,7 @@ export default function AdminDocumentosPage() {
                   value={form.bookingId}
                   onChange={(event) => setForm((current) => ({ ...current, bookingId: event.target.value }))}
                   placeholder="ID de reserva"
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                   className="app-input"
                 />
               </label>
 

@@ -41,7 +41,7 @@ const Navbar: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-slate-200 bg-slate-50 text-slate-500 hover:text-blue-600 hover:bg-blue-50 hover:ring-blue-200 transition-all duration-300"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-slate-200 bg-slate-50 text-slate-500 hover:text-teal-700 hover:bg-teal-50 hover:ring-teal-200 transition-all duration-300"
                 >
                   <SiFacebook size={16} />
                 </Link>
@@ -50,7 +50,7 @@ const Navbar: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-slate-200 bg-slate-50 text-slate-500 hover:text-pink-600 hover:bg-pink-50 hover:ring-pink-200 transition-all duration-300"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-slate-200 bg-slate-50 text-slate-500 hover:text-teal-700 hover:bg-teal-50 hover:ring-teal-200 transition-all duration-300"
                 >
                   <RiInstagramLine size={16} />
                 </Link>

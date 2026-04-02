@@ -80,11 +80,11 @@ export default function AdminPagosPage() {
   );
 
   return (
-    <main className="space-y-6 p-6 text-slate-900">
+    <main className="app-page p-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Panel admin de pagos</h1>
-          <p className="text-sm text-slate-600">
+          <h1 className="app-title">Panel admin de pagos</h1>
+          <p className="app-subtitle">
             Vista operativa global de pagos y reembolsos disponible para cuentas ADMIN u OPERATIONS.
           </p>
         </div>
@@ -94,7 +94,7 @@ export default function AdminPagosPage() {
             type="button"
             onClick={() => void loadPayments()}
             disabled={!canOperate}
-            className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-500 disabled:opacity-60"
+            className="app-primary-button"
           >
             Actualizar
           </button>
@@ -102,37 +102,37 @@ export default function AdminPagosPage() {
       </div>
 
       {!hydrated ? (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-zinc-300">
+        <div className="app-surface-soft p-6 text-sm text-slate-600">
           Cargando sesión...
         </div>
       ) : null}
 
       {hydrated && !customer ? (
-        <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-6 text-sm text-amber-100">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800">
           Necesitas iniciar sesión desde <Link href="/app/perfil" className="underline">perfil</Link>.
         </div>
       ) : null}
 
       {hydrated && customer && !canOperate ? (
-        <div className="rounded-2xl border border-red-400/30 bg-red-500/10 p-6 text-sm text-red-100">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
           Tu cuenta actual no tiene permisos para ver el panel global.
         </div>
       ) : null}
 
       {error ? (
-        <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {error}
         </div>
       ) : null}
 
       {hydrated && canOperate && loading ? (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-zinc-300">
+        <div className="app-surface-soft p-6 text-sm text-slate-600">
           Cargando pagos globales...
         </div>
       ) : null}
 
       {hydrated && canOperate && !loading && !sortedItems.length ? (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-zinc-300">
+        <div className="app-surface-soft p-6 text-sm text-slate-600">
           Aún no hay pagos registrados en el sistema.
         </div>
       ) : null}
@@ -141,7 +141,7 @@ export default function AdminPagosPage() {
         {sortedItems.map((payment) => (
           <article
             key={payment.id}
-            className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm"
+            className="app-surface p-5"
           >
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="space-y-2">

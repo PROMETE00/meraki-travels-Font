@@ -192,11 +192,11 @@ export default function AdminReservasPage() {
   }
 
   return (
-    <main className="space-y-6 p-6 text-slate-900">
+    <main className="app-page p-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Admin · Reservas</h1>
-          <p className="text-sm text-slate-600">
+          <h1 className="app-title">Admin · Reservas</h1>
+          <p className="app-subtitle">
             Filtra reservas globales y ejecuta acciones manuales con nota operativa.
           </p>
         </div>
@@ -206,20 +206,20 @@ export default function AdminReservasPage() {
             type="button"
             onClick={() => void loadBookings()}
             disabled={!canOperate}
-            className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-500 disabled:opacity-60"
+            className="app-primary-button"
           >
             Actualizar
           </button>
         </div>
       </div>
 
-      <section className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-5 md:grid-cols-[220px_1fr_auto] md:items-end">
+      <section className="app-surface grid gap-3 p-5 md:grid-cols-[220px_1fr_auto] md:items-end">
         <label className="grid gap-2 text-sm">
           <span>Estado</span>
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="rounded-xl bg-black/20 px-3 py-2 outline-none ring-1 ring-white/10"
+            className="app-input"
           >
             <option value="ALL">Todos</option>
             <option value="PENDING">PENDING</option>
@@ -233,7 +233,7 @@ export default function AdminReservasPage() {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="rounded-xl bg-black/20 px-3 py-2 outline-none ring-1 ring-white/10"
+            className="app-input"
             placeholder="Cliente, email, paquete, ruta o nota"
           />
         </label>
@@ -242,7 +242,7 @@ export default function AdminReservasPage() {
           type="button"
           onClick={() => void loadBookings()}
           disabled={!canOperate}
-          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold transition hover:bg-blue-500 disabled:opacity-60"
+          className="app-secondary-button"
         >
           Aplicar filtros
         </button>

@@ -297,11 +297,11 @@ export default function AdminClientesPage() {
   }
 
   return (
-    <main className="space-y-6 p-6 text-slate-900">
+    <main className="app-page p-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Admin · Clientes</h1>
-          <p className="text-sm text-slate-600">
+          <h1 className="app-title">Admin · Clientes</h1>
+          <p className="app-subtitle">
             Busca usuarios, revisa su contexto operativo y administra roles desde soporte.
           </p>
         </div>
@@ -311,7 +311,7 @@ export default function AdminClientesPage() {
             type="button"
             onClick={() => setShowCreateModal(true)}
             disabled={!isAdmin}
-            className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-60"
+            className="app-primary-button"
           >
             + Crear usuario
           </button>
@@ -319,7 +319,7 @@ export default function AdminClientesPage() {
             type="button"
             onClick={() => void loadCustomers()}
             disabled={!isAdmin}
-            className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-500 disabled:opacity-60"
+            className="app-primary-button"
           >
             Actualizar
           </button>
@@ -327,21 +327,21 @@ export default function AdminClientesPage() {
       </div>
 
       <section className="grid gap-6 xl:grid-cols-[360px_1fr]">
-        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="app-surface-soft space-y-4 p-5">
           <label className="grid gap-2 text-sm">
             <span>Buscar cliente</span>
             <div className="flex gap-2">
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                className="app-input flex-1"
                 placeholder="Nombre, email, teléfono o rol"
               />
               <button
                 type="button"
                 onClick={() => void loadCustomers()}
                 disabled={!isAdmin}
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold transition hover:bg-blue-500 disabled:opacity-60"
+                className="app-secondary-button"
               >
                 Buscar
               </button>
@@ -358,12 +358,12 @@ export default function AdminClientesPage() {
                 type="button"
                 onClick={() => setSelectedId(item.id)}
                 className={`rounded-xl border p-4 text-left transition ${
-                  selectedId === item.id ? "border-cyan-300 bg-cyan-50" : "border-slate-200 bg-white hover:border-teal-200 hover:bg-teal-50"
+                  selectedId === item.id ? "border-teal-300 bg-teal-50/70" : "border-slate-200 bg-white hover:border-teal-200 hover:bg-teal-50"
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="font-medium text-slate-900">{item.fullName}</div>
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700">{item.role}</span>
+                  <span className="rounded-full bg-teal-50 px-2 py-1 text-xs text-teal-700">{item.role}</span>
                 </div>
                 <div className="mt-2 text-sm text-slate-600">{item.email}</div>
                 <div className="mt-1 text-xs text-slate-500">
@@ -374,8 +374,8 @@ export default function AdminClientesPage() {
           </div>
         </div>
 
-        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          {error ? <div className="rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
+        <div className="app-surface-soft space-y-4 p-5">
+          {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
           {!hydrated ? <div className="text-sm text-slate-600">Cargando sesión...</div> : null}
           {hydrated && !customer ? <div className="text-sm text-amber-700">Necesitas iniciar sesión.</div> : null}
           {hydrated && customer && !isAdmin ? <div className="text-sm text-red-700">Tu cuenta no tiene permisos para este panel.</div> : null}
@@ -388,7 +388,7 @@ export default function AdminClientesPage() {
           {overview ? (
             <>
               <section className="grid gap-4 xl:grid-cols-2">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="app-surface p-4">
                   <h2 className="text-lg font-semibold text-slate-900">Datos del cliente</h2>
                   <div className="mt-4 grid gap-3">
                     <label className="grid gap-1 text-sm">
@@ -396,7 +396,7 @@ export default function AdminClientesPage() {
                       <input
                         value={profileDraft.fullName}
                         onChange={(event) => setProfileDraft((current) => ({ ...current, fullName: event.target.value }))}
-                        className="rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                        className="app-input"
                       />
                     </label>
                     <label className="grid gap-1 text-sm">
@@ -404,7 +404,7 @@ export default function AdminClientesPage() {
                       <input
                         value={profileDraft.email}
                         onChange={(event) => setProfileDraft((current) => ({ ...current, email: event.target.value }))}
-                        className="rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                        className="app-input"
                       />
                     </label>
                     <label className="grid gap-1 text-sm">
@@ -412,7 +412,7 @@ export default function AdminClientesPage() {
                       <input
                         value={profileDraft.phone}
                         onChange={(event) => setProfileDraft((current) => ({ ...current, phone: event.target.value }))}
-                        className="rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                        className="app-input"
                       />
                     </label>
                     <label className="grid gap-1 text-sm">
@@ -420,7 +420,7 @@ export default function AdminClientesPage() {
                       <input
                         value={profileDraft.profileImageUrl}
                         onChange={(event) => setProfileDraft((current) => ({ ...current, profileImageUrl: event.target.value }))}
-                        className="rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                        className="app-input"
                       />
                     </label>
                     <div className="text-xs text-slate-500">Alta: {formatDate(overview.customer.createdAt)}</div>

@@ -113,8 +113,8 @@ export default function AppHomePage() {
 
   if (customer && (isAdmin || isOperations)) {
     return (
-      <main className="space-y-6">
-        <section className="rounded-2xl bg-gradient-to-r from-[#7C7E9D] to-[#4C5372] p-6 text-white">
+    <main className="app-page">
+        <section className="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-teal-700 p-6 text-white">
           <h1 className="text-3xl font-bold">Panel de administración</h1>
           <p className="mt-2 text-[#FFFDF6]/90">
             Esta cuenta está enfocada en administrar lo que ven los clientes, no en reservar viajes.
@@ -122,28 +122,28 @@ export default function AppHomePage() {
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Link href="/app/admin/reservas" className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm transition hover:border-[#949AB1] hover:bg-[#E2D4E0]/40">
+          <Link href="/app/admin/reservas" className="app-surface-soft p-5 transition hover:border-teal-300 hover:bg-teal-50/60">
             <h2 className="font-semibold text-slate-900">Administrar reservas</h2>
             <p className="mt-1 text-sm text-[#7C7E9D]">Confirma, cancela y da seguimiento a reservas.</p>
           </Link>
-          <Link href="/app/admin/pagos" className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm transition hover:border-[#949AB1] hover:bg-[#E2D4E0]/40">
+          <Link href="/app/admin/pagos" className="app-surface-soft p-5 transition hover:border-teal-300 hover:bg-teal-50/60">
             <h2 className="font-semibold text-slate-900">Administrar pagos</h2>
             <p className="mt-1 text-sm text-[#7C7E9D]">Monitorea pagos, estados y reembolsos.</p>
           </Link>
-          <Link href="/app/admin/documentos" className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm transition hover:border-[#949AB1] hover:bg-[#E2D4E0]/40">
+          <Link href="/app/admin/documentos" className="app-surface-soft p-5 transition hover:border-teal-300 hover:bg-teal-50/60">
             <h2 className="font-semibold text-slate-900">Administrar documentos</h2>
             <p className="mt-1 text-sm text-[#7C7E9D]">Asigna y cambia documentos por cliente.</p>
           </Link>
-          <Link href="/app/admin/catalogo" className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm transition hover:border-[#949AB1] hover:bg-[#E2D4E0]/40">
+          <Link href="/app/admin/catalogo" className="app-surface-soft p-5 transition hover:border-teal-300 hover:bg-teal-50/60">
             <h2 className="font-semibold text-slate-900">Administrar catálogo</h2>
             <p className="mt-1 text-sm text-[#7C7E9D]">Controla paquetes, banners y medios.</p>
           </Link>
-          <Link href="/app/admin/dome" className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm transition hover:border-[#949AB1] hover:bg-[#E2D4E0]/40">
+          <Link href="/app/admin/dome" className="app-surface-soft p-5 transition hover:border-teal-300 hover:bg-teal-50/60">
             <h2 className="font-semibold text-slate-900">Administrar Dome</h2>
             <p className="mt-1 text-sm text-[#7C7E9D]">Gestiona promociones de la galería.</p>
           </Link>
           {isAdmin ? (
-            <Link href="/app/admin/clientes" className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm transition hover:border-[#949AB1] hover:bg-[#E2D4E0]/40">
+            <Link href="/app/admin/clientes" className="app-surface-soft p-5 transition hover:border-teal-300 hover:bg-teal-50/60">
               <h2 className="font-semibold text-slate-900">Administrar clientes</h2>
               <p className="mt-1 text-sm text-[#7C7E9D]">Gestiona roles y contexto de usuarios.</p>
             </Link>
@@ -154,9 +154,9 @@ export default function AppHomePage() {
   }
 
   return (
-    <main className="space-y-8 overflow-x-hidden text-slate-900">
+    <main className="app-page overflow-x-hidden">
       {/* Welcome section */}
-      <div className="rounded-2xl bg-gradient-to-r from-[#949AB1] to-[#4C5372] p-6 text-white shadow-md">
+      <div className="rounded-2xl bg-gradient-to-r from-slate-800 via-slate-700 to-teal-700 p-6 text-white shadow-md">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">¡Bienvenido de vuelta, {customer?.fullName || "Usuario"}!</h1>
           <p className="text-[#FFFDF6]/90">
@@ -170,21 +170,21 @@ export default function AppHomePage() {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
            <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-2">
-             <FaPlane className="h-5 w-5 text-[#4C5372]" />
+            <FaPlane className="h-5 w-5 text-teal-700" />
               Seguimiento de viajes activos
             </h2>
             <Link
               href="/app/reservas"
-               className="text-sm font-medium text-[#4C5372] hover:text-[#4C5372]/90"
+               className="text-sm font-medium text-teal-700 hover:text-teal-600"
             >
               Ver todos
             </Link>
           </div>
 
           {loading ? (
-            <div className="rounded-xl border border-[#E2D4E0] bg-white p-8 text-center">
-               <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[#4C5372]"></div>
-              <p className="mt-2 text-sm text-[#7C7E9D]">Cargando viajes...</p>
+            <div className="app-surface-soft p-8 text-center">
+               <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-teal-700"></div>
+              <p className="mt-2 text-sm text-slate-600">Cargando viajes...</p>
             </div>
           ) : activeBookings.length > 0 ? (
             <div className="grid gap-4">
@@ -194,11 +194,11 @@ export default function AppHomePage() {
                 const isToday = days === 0;
                 
                 return (
-                  <div key={booking.id} className="rounded-xl border border-[#E2D4E0] bg-[#FFFDF6] p-6 shadow-sm">
+                  <div key={booking.id} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex-1">
                         <h3 className="font-semibold text-slate-800">{booking.packageTitle}</h3>
-                        <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-[#7C7E9D]">
+                        <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-600">
                           <div className="flex items-center gap-1">
                             <FaMapMarkerAlt className="h-4 w-4" />
                             {booking.originCode} → {booking.destinationCode}
@@ -212,12 +212,12 @@ export default function AppHomePage() {
                         {/* Status */}
                         <div className="mt-3">
                           {isOngoing ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-[#E2D4E0] px-3 py-1 text-sm font-medium text-[#4C5372]">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-3 py-1 text-sm font-medium text-teal-700">
                               <FaClock className="h-4 w-4" />
                               Viaje en progreso
                             </span>
                           ) : isToday ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-[#E2D4E0] px-3 py-1 text-sm font-medium text-[#4C5372]">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-3 py-1 text-sm font-medium text-teal-700">
                               <FaPlane className="h-4 w-4" />
                               ¡Viaje hoy!
                             </span>

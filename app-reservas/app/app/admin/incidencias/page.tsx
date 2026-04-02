@@ -316,18 +316,18 @@ export default function AdminIncidenciasPage() {
   }
 
   return (
-    <main className="space-y-6 p-6 text-slate-900">
+    <main className="app-page p-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Admin · Incidencias</h1>
-          <p className="text-sm text-slate-600">Tablero operativo para tickets, seguimiento y conversación con clientes.</p>
+          <h1 className="app-title">Admin · Incidencias</h1>
+          <p className="app-subtitle">Tablero operativo para tickets, seguimiento y conversación con clientes.</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => void loadTickets()}
             disabled={!isAdmin}
-            className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-500 disabled:opacity-60"
+            className="app-primary-button"
           >
             Actualizar
           </button>
