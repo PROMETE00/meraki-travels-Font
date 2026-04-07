@@ -1,9 +1,6 @@
 services:
   app:
-    build:
-      context: .
-      args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://merakitravelsbackend.prome.works}
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-prome}/meraki-travels-frontend:latest
     container_name: meraki-frontend-app
     restart: always
     environment:
