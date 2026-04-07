@@ -294,7 +294,7 @@ const CardNav: React.FC<CardNavProps> = ({
                     {results.slice(0, 4).map((pkg) => (
                       <Link
                         key={pkg.id}
-                        href={`/paquetes/${pkg.id}`}
+                        href={`/packages/${pkg.id}`}
                         className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 hover:bg-teal-50 border border-slate-100 hover:border-teal-200 transition-all group"
                       >
                         {pkg.image ? (
@@ -335,7 +335,7 @@ const CardNav: React.FC<CardNavProps> = ({
                     {destinations.map((dest) => (
                       <Link
                         key={dest.id}
-                        href={dest.link || `/paquetes?destino=${dest.name}`}
+                        href={dest.link || `/packages?destino=${dest.name}`}
                         className="flex items-center gap-2 px-3 py-2 rounded-full bg-slate-100 hover:bg-teal-100 hover:text-teal-700 transition-all text-sm text-slate-600"
                       >
                         <FiMapPin size={14} />

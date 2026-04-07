@@ -2,8 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import merakiImageLoader from "@/lib/image-loader";
 import type { ImageAsset } from "@/lib/nocodb";
 
+/**
+ * Componente de carrusel de fondo animado.
+ * Utiliza next/image para optimización de carga y WebP.
+ */
 type Slide = { src: string; alt?: string | null };
 type ImagesResponse = { images?: ImageAsset[] };
 
@@ -14,10 +20,11 @@ type Props = {
   ownerId: number;
   intervalMs?: number;
   transition?: Transition;
-  className?: string;             // para tamaños (h-[100svh], etc.)
+  className?: string;             
   showArrows?: boolean;
   showDots?: boolean;
   limit?: number;
+  priority?: boolean; // Prop para priorizar la carga (LCP)
 };
 
 export default function BackgroundCarousel({
@@ -29,30 +36,37 @@ export default function BackgroundCarousel({
   showArrows = true,
   showDots = true,
   limit = 20,
+  priority = false,
 }: Props) {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [idx, setIdx] = useState(0);
 
+  // Carga inicial de imágenes desde la API
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await fetch(
-        `/api/images/${encodeURIComponent(ownerTable)}/${ownerId}?limit=${limit}`,
-        { cache: "no-store" }
-      );
-      const data = (await res.json()) as ImagesResponse;
-      if (!cancelled) {
-        const imgs: Slide[] = (data.images ?? []).map((it) => ({
-          src: it.path,
-          alt: it.alt_text,
-        }));
-        setSlides(imgs);
-        setIdx(0);
+      try {
+        const res = await fetch(
+          `/api/images/${encodeURIComponent(ownerTable)}/${ownerId}?limit=${limit}`,
+          { cache: "no-store" }
+        );
+        const data = (await res.json()) as ImagesResponse;
+        if (!cancelled && data.images) {
+          const imgs: Slide[] = data.images.map((it) => ({
+            src: it.path,
+            alt: it.alt_text,
+          }));
+          setSlides(imgs);
+          setIdx(0);
+        }
+      } catch (e) {
+        console.error("Error cargando imágenes del carrusel:", e);
       }
     })();
     return () => { cancelled = true; };
   }, [ownerTable, ownerId, limit]);
 
+  // Manejo del intervalo automático de cambio de slide
   useEffect(() => {
     if (slides.length <= 1) return;
     const t = setInterval(() => {
@@ -61,11 +75,10 @@ export default function BackgroundCarousel({
     return () => clearInterval(t);
   }, [slides, intervalMs]);
 
-  const onPrev = () =>
-    setIdx((p) => (p - 1 + slides.length) % slides.length);
-  const onNext = () =>
-    setIdx((p) => (p + 1) % slides.length);
+  const onPrev = () => setIdx((p) => (p - 1 + slides.length) % slides.length);
+  const onNext = () => setIdx((p) => (p + 1) % slides.length);
 
+  // Variantes de animación según el tipo de transición
   const variants = useMemo(() => {
     switch (transition) {
       case "slide":
@@ -99,52 +112,62 @@ export default function BackgroundCarousel({
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      {/* Slides en background */}
+      {/* Slides optimizados con Next Image */}
       <div className="absolute inset-0">
         <AnimatePresence mode="popLayout">
-          <motion.img
+          <motion.div
             key={idx}
             initial="enter"
             animate="center"
             exit="exit"
             variants={variants}
             transition={{ duration: 0.8, ease: "easeInOut" }}
-            src={slides[idx].src}
-            alt={slides[idx].alt ?? ""}
-            className="h-full w-full object-cover"
-          />
+            className="relative h-full w-full"
+          >
+            <Image
+              loader={merakiImageLoader}
+              src={slides[idx].src}
+              alt={slides[idx].alt ?? "Fondo de carrusel"}
+              fill
+              priority={priority && idx === 0}
+              quality={85}
+              className="object-cover"
+              sizes="100vw"
+            />
+          </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Overlay (oscurecer si quieres) */}
       <div className="absolute inset-0 bg-black/20 pointer-events-none" />
 
-      {/* Flechas */}
+      {/* Navegación manual */}
       {showArrows && slides.length > 1 && (
-        <>
+        <div className="flex justify-between absolute w-full top-1/2 -translate-y-1/2 px-4 z-10">
           <button
             onClick={onPrev}
-            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 hover:bg-black/60 p-3 text-white backdrop-blur-sm"
+            className="rounded-full bg-black/40 hover:bg-black/60 p-3 text-white backdrop-blur-sm transition-colors"
           >
             ‹
           </button>
           <button
             onClick={onNext}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 hover:bg-black/60 p-3 text-white backdrop-blur-sm"
+            className="rounded-full bg-black/40 hover:bg-black/60 p-3 text-white backdrop-blur-sm transition-colors"
           >
             ›
           </button>
-        </>
+        </div>
       )}
 
-      {/* Dots */}
+      {/* Indicadores inferiores */}
       {showDots && slides.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2.5 z-10">
           {slides.map((_, i) => (
             <button
               key={i}
               onClick={() => setIdx(i)}
-              className={`h-2.5 w-2.5 rounded-full ${i === idx ? "bg-white" : "bg-white/50"}`}
+              className={`h-2.5 w-2.5 rounded-full transition-all ${
+                i === idx ? "bg-white w-6" : "bg-white/50 hover:bg-white/80"
+              }`}
               aria-label={`Ir a imagen ${i + 1}`}
             />
           ))}

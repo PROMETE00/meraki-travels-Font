@@ -2,11 +2,17 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import merakiImageLoader from "@/lib/image-loader";
 import { http, isHttpErrorStatus } from "@/lib/http";
 import { useStore } from "@/lib/store";
 import { buildAuthHeaders, useSessionStore } from "@/lib/session-store";
 import type { BookingResponse, SearchResultItem } from "@/features/search/types";
 
+/**
+ * Tarjeta de resultado para la lista del catálogo de viajes.
+ * Optimizada para carga rápida y visualización responsiva.
+ */
 export default function ResultCard({ item }: { item: SearchResultItem }) {
   const router = useRouter();
   const { criteria } = useStore();
@@ -18,15 +24,19 @@ export default function ResultCard({ item }: { item: SearchResultItem }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Cálculo de fechas sugeridas según criterios de búsqueda
   const tripDates = useMemo(() => {
     const startDate = criteria.dateFrom || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
     const endDate = criteria.dateTo || new Date(Date.now() + 11 * 86400000).toISOString().slice(0, 10);
     return { startDate, endDate };
   }, [criteria.dateFrom, criteria.dateTo]);
 
+  /**
+   * Intenta crear una reserva para el paquete seleccionado.
+   */
   async function reservePackage() {
     if (!customer || !token) {
-      router.push("/app/perfil");
+      router.push("/app/profile");
       return;
     }
 
@@ -50,7 +60,7 @@ export default function ResultCard({ item }: { item: SearchResultItem }) {
       if (isHttpErrorStatus(reservationError, 401)) {
         logout();
         setError("Tu sesión expiró. Inicia sesión nuevamente para reservar.");
-        router.push("/app/perfil");
+        router.push("/app/profile");
       } else {
         setError("No pudimos crear la reserva. Revisa que el backend esté arriba y tu sesión siga activa.");
       }
@@ -64,11 +74,16 @@ export default function ResultCard({ item }: { item: SearchResultItem }) {
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex gap-4">
           {item.coverImageUrl ? (
-            <img
-              src={item.coverImageUrl}
-              alt={item.title}
-              className="h-24 w-32 rounded-xl border border-white/10 object-cover"
-            />
+            <div className="relative h-24 w-32 overflow-hidden rounded-xl border border-white/10">
+              <Image
+                loader={merakiImageLoader}
+                src={item.coverImageUrl}
+                alt={item.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 128px"
+              />
+            </div>
           ) : null}
 
           <div className="space-y-1">

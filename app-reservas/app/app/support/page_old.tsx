@@ -327,7 +327,7 @@ export default function SoportePage() {
         <h2 className="mb-4 text-lg font-semibold text-white">Enlaces rápidos</h2>
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
           <Link
-            href="/app/reservas"
+            href="/app/bookings"
             className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/20">
@@ -338,7 +338,7 @@ export default function SoportePage() {
             <span className="text-sm font-medium text-white">Mis viajes</span>
           </Link>
           <Link
-            href="/app/pagos"
+            href="/app/payments"
             className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/20">
@@ -349,7 +349,7 @@ export default function SoportePage() {
             <span className="text-sm font-medium text-white">Mis pagos</span>
           </Link>
           <Link
-            href="/app/perfil"
+            href="/app/profile"
             className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/20">

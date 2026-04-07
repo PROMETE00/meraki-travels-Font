@@ -27,25 +27,25 @@ type MenuItem = {
 
 const customerMenu: MenuItem[] = [
   { href: "/app", label: "Inicio", icon: FaHome },
-  { href: "/app/reservas", label: "Reservas", icon: FaCalendarCheck },
-  { href: "/app/pagos", label: "Pagos", icon: FaCreditCard },
-  { href: "/app/incidencias", label: "Incidencias", icon: FaBell },
-  { href: "/app/documentos", label: "Documentos", icon: FaFileAlt },
-  { href: "/app/soporte", label: "Soporte", icon: FaHeadset },
+  { href: "/app/bookings", label: "Reservas", icon: FaCalendarCheck },
+  { href: "/app/payments", label: "Pagos", icon: FaCreditCard },
+  { href: "/app/incidents", label: "Incidencias", icon: FaBell },
+  { href: "/app/documents", label: "Documentos", icon: FaFileAlt },
+  { href: "/app/support", label: "Soporte", icon: FaHeadset },
 ];
 
 const operationsMenu: MenuItem[] = [
   { href: "/app/admin", label: "Panel operativo", icon: FaChartPie },
-  { href: "/app/admin/reservas", label: "Reservas", icon: FaCalendarCheck },
-  { href: "/app/admin/pagos", label: "Pagos", icon: FaCreditCard },
-  { href: "/app/admin/catalogo", label: "Catálogo", icon: FaFileAlt },
+  { href: "/app/admin/bookings", label: "Reservas", icon: FaCalendarCheck },
+  { href: "/app/admin/payments", label: "Pagos", icon: FaCreditCard },
+  { href: "/app/admin/catalog", label: "Catálogo", icon: FaFileAlt },
   { href: "/app/admin/dome", label: "Dome", icon: FaChartPie },
-  { href: "/app/admin/documentos", label: "Documentos", icon: FaFileAlt },
+  { href: "/app/admin/documents", label: "Documentos", icon: FaFileAlt },
 ];
 
 const adminOnlyMenu: MenuItem[] = [
-  { href: "/app/admin/clientes", label: "Clientes", icon: FaUsers },
-  { href: "/app/admin/incidencias", label: "Incidencias", icon: FaBell },
+  { href: "/app/admin/customers", label: "Clientes", icon: FaUsers },
+  { href: "/app/admin/incidents", label: "Incidencias", icon: FaBell },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -74,7 +74,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const menuItems = canOperate
     ? [...operationsMenu, ...(isAdmin ? adminOnlyMenu : [])]
-    : [...customerMenu, { href: "/app/perfil", label: "Mi perfil", icon: FaUserShield }];
+    : [...customerMenu, { href: "/app/profile", label: "Mi perfil", icon: FaUserShield }];
 
   const roleBadge = customer?.role === "ADMIN" ? "Admin" : customer?.role === "OPERATIONS" ? "Operador" : "Cliente";
   const sidebarTheme =
@@ -84,8 +84,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         ? "from-slate-900 via-slate-800 to-teal-700"
         : "from-slate-900 via-slate-800 to-teal-700";
 
-  if (pathname === "/app/acceder") {
-    return <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-teal-950">{children}</div>;
+  if (pathname === "/app/login") {
+    return <div className="min-h-screen bg-gradient-to-br from-[#4C5372] via-[#7C7E9D] to-[#949AB1]">{children}</div>;
   }
 
   if (!hydrated) {

@@ -143,21 +143,21 @@ export default function SoportePage() {
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-3 justify-center">
         <Link
-          href="/app/incidencias"
+          href="/app/incidents"
           className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-700"
         >
           <FaExclamationTriangle className="h-4 w-4" />
           Reportar problema
         </Link>
         <Link
-          href="/app/reservas"
+          href="/app/bookings"
           className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
         >
           <FaClipboard className="h-4 w-4" />
           Mis reservas
         </Link>
         <Link
-          href="/app/pagos"
+          href="/app/payments"
           className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
         >
           <FaFileAlt className="h-4 w-4" />
@@ -280,7 +280,7 @@ export default function SoportePage() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            href="/app/incidencias"
+            href="/app/incidents"
             className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-6 py-3 font-medium text-white transition-colors hover:bg-teal-700"
           >
             <FaExclamationTriangle className="h-5 w-5" />

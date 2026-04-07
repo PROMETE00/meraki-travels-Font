@@ -76,7 +76,7 @@ const Navbar: React.FC = () => {
                 </button>
 
                 <Link
-                  href="/app/perfil"
+                  href="/app/profile"
                   aria-label="Cuenta"
                   className="inline-flex h-9 items-center gap-2 rounded-full ring-1 ring-teal-200 bg-teal-50 px-3 text-teal-700 transition-all duration-300 hover:bg-teal-100 hover:ring-teal-300 hover:shadow-md"
                 >

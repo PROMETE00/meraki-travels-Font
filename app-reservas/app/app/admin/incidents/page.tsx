@@ -674,7 +674,7 @@ export default function AdminIncidenciasPage() {
 
                       <div className="flex flex-wrap gap-2">
                         {ticket.bookingId ? (
-                          <Link href="/app/admin/reservas" className="rounded-xl border border-white/10 px-4 py-2 text-sm transition hover:bg-white/10">
+                          <Link href="/app/admin/bookings" className="rounded-xl border border-white/10 px-4 py-2 text-sm transition hover:bg-white/10">
                             Ver reservas
                           </Link>
                         ) : null}

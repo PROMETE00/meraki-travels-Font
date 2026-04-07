@@ -56,7 +56,7 @@ export default function AppHomePage() {
         
         <div className={`grid gap-6 ${isAdmin ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-4"}`}>
           <Link
-            href="/app/reservas"
+            href="/app/bookings"
             className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-teal-200 hover:bg-teal-50"
           >
             <div className="flex items-start gap-4">
@@ -90,7 +90,7 @@ export default function AppHomePage() {
           </Link>
 
           <Link
-            href="/app/pagos"
+            href="/app/payments"
             className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-blue-200 hover:bg-blue-50"
           >
             <div className="flex items-start gap-4">
@@ -107,7 +107,7 @@ export default function AppHomePage() {
           </Link>
 
           <Link
-            href="/app/incidencias"
+            href="/app/incidents"
             className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-orange-200 hover:bg-orange-50"
           >
             <div className="flex items-start gap-4">
@@ -155,7 +155,7 @@ export default function AppHomePage() {
             {isAdmin && (
               <>
                 <Link
-                  href="/app/admin/clientes"
+                  href="/app/admin/customers"
                   className="group rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-6 shadow-sm transition-all hover:shadow-md hover:from-purple-100 hover:to-pink-100"
                 >
                   <div className="flex items-start gap-4">
@@ -172,7 +172,7 @@ export default function AppHomePage() {
                 </Link>
 
                 <Link
-                  href="/app/admin/catalogo"
+                  href="/app/admin/catalog"
                   className="group rounded-2xl border border-pink-200 bg-gradient-to-br from-pink-50 to-rose-50 p-6 shadow-sm transition-all hover:shadow-md hover:from-pink-100 hover:to-rose-100"
                 >
                   <div className="flex items-start gap-4">
@@ -203,7 +203,7 @@ export default function AppHomePage() {
             </p>
           </div>
           <Link
-            href="/app/perfil"
+            href="/app/profile"
             className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-700"
           >
             <FaUserCog className="h-4 w-4" />

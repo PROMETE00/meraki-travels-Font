@@ -153,7 +153,7 @@ export default function CheckoutClient({ bookingId }: { bookingId: number }) {
         <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-5 text-sm text-amber-100">
           Necesitas iniciar sesión para abrir este checkout.
         </div>
-        <Link href="/app/perfil" className="text-sm text-zinc-300 underline">
+        <Link href="/app/profile" className="text-sm text-zinc-300 underline">
           Ir a perfil
         </Link>
       </div>
@@ -174,7 +174,7 @@ export default function CheckoutClient({ bookingId }: { bookingId: number }) {
         <div className="rounded-2xl border border-red-400/30 bg-red-500/10 p-5 text-sm text-red-100">
           {error ?? "No pudimos abrir el checkout."}
         </div>
-        <Link href="/app/reservas" className="text-sm text-zinc-300 underline">
+        <Link href="/app/bookings" className="text-sm text-zinc-300 underline">
           Volver a reservas
         </Link>
       </div>
@@ -254,7 +254,7 @@ export default function CheckoutClient({ bookingId }: { bookingId: number }) {
 
         <div className="flex gap-3">
           <Link
-            href="/app/reservas"
+            href="/app/bookings"
             className="rounded-xl border border-white/10 px-4 py-2 text-sm transition hover:bg-white/10"
           >
             Ver reservas

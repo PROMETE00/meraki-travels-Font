@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSessionStore } from "@/lib/session-store";
 import { useCallback, useEffect, useState } from "react";
-import { http, isHttpErrorStatus } from "@/lib/http";
+import { http } from "@/lib/http";
 import { buildAuthHeaders } from "@/lib/session-store";
 import type { BookingResponse } from "@/features/search/types";
 import { 
@@ -11,7 +11,6 @@ import {
   FaSearch, 
   FaCreditCard, 
   FaHeadset, 
-  FaUserCog,
   FaUsers,
   FaChartLine,
   FaImages,
@@ -23,7 +22,6 @@ import {
   FaIdCard,
   FaClock,
   FaRoute,
-  FaHotel,
   FaTicketAlt
 } from "react-icons/fa";
 
@@ -35,7 +33,6 @@ interface TravelDocument {
   bookingId?: number;
 }
 
-// Documentos de ejemplo - en producción vendrían de la API
 const mockDocuments: TravelDocument[] = [
   { id: "1", name: "Guía de documentos de viaje", type: "passport", url: "#" },
   { id: "2", name: "Formulario de seguro de viaje", type: "insurance", url: "#" },
@@ -92,10 +89,9 @@ export default function AppHomePage() {
       const response = await http<BookingResponse[]>("/api/bookings", {
         headers: buildAuthHeaders(token),
       });
-      // Filtrar solo viajes confirmados que estén por venir
       const active = response.filter(booking => {
         const days = daysUntil(booking.startDate);
-        return booking.status === "CONFIRMED" && days !== null && days >= -7; // Incluir viajes hasta 7 días después de iniciados
+        return booking.status === "CONFIRMED" && days !== null && days >= -7;
       });
       setActiveBookings(active);
     } catch (err) {
@@ -114,36 +110,36 @@ export default function AppHomePage() {
   if (customer && (isAdmin || isOperations)) {
     return (
     <main className="app-page">
-        <section className="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-teal-700 p-6 text-white">
+        <section className="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-teal-700 p-6 text-white shadow-lg">
           <h1 className="text-3xl font-bold">Panel de administración</h1>
           <p className="mt-2 text-[#FFFDF6]/90">
-            Esta cuenta está enfocada en administrar lo que ven los clientes, no en reservar viajes.
+            Gestiona la operación, catálogo y atención a clientes de Meraki Travels.
           </p>
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Link href="/app/admin/reservas" className="app-surface-soft p-5 transition hover:border-teal-300 hover:bg-teal-50/60">
+          <Link href="/app/admin/bookings" className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm transition hover:border-teal-400 hover:bg-teal-50/40">
             <h2 className="font-semibold text-slate-900">Administrar reservas</h2>
             <p className="mt-1 text-sm text-[#7C7E9D]">Confirma, cancela y da seguimiento a reservas.</p>
           </Link>
-          <Link href="/app/admin/pagos" className="app-surface-soft p-5 transition hover:border-teal-300 hover:bg-teal-50/60">
+          <Link href="/app/admin/payments" className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm transition hover:border-teal-400 hover:bg-teal-50/40">
             <h2 className="font-semibold text-slate-900">Administrar pagos</h2>
             <p className="mt-1 text-sm text-[#7C7E9D]">Monitorea pagos, estados y reembolsos.</p>
           </Link>
-          <Link href="/app/admin/documentos" className="app-surface-soft p-5 transition hover:border-teal-300 hover:bg-teal-50/60">
+          <Link href="/app/admin/documents" className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm transition hover:border-teal-400 hover:bg-teal-50/40">
             <h2 className="font-semibold text-slate-900">Administrar documentos</h2>
             <p className="mt-1 text-sm text-[#7C7E9D]">Asigna y cambia documentos por cliente.</p>
           </Link>
-          <Link href="/app/admin/catalogo" className="app-surface-soft p-5 transition hover:border-teal-300 hover:bg-teal-50/60">
+          <Link href="/app/admin/catalog" className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm transition hover:border-teal-400 hover:bg-teal-50/40">
             <h2 className="font-semibold text-slate-900">Administrar catálogo</h2>
             <p className="mt-1 text-sm text-[#7C7E9D]">Controla paquetes, banners y medios.</p>
           </Link>
-          <Link href="/app/admin/dome" className="app-surface-soft p-5 transition hover:border-teal-300 hover:bg-teal-50/60">
+          <Link href="/app/admin/dome" className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm transition hover:border-teal-400 hover:bg-teal-50/40">
             <h2 className="font-semibold text-slate-900">Administrar Dome</h2>
             <p className="mt-1 text-sm text-[#7C7E9D]">Gestiona promociones de la galería.</p>
           </Link>
           {isAdmin ? (
-            <Link href="/app/admin/clientes" className="app-surface-soft p-5 transition hover:border-teal-300 hover:bg-teal-50/60">
+            <Link href="/app/admin/customers" className="rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-5 shadow-sm transition hover:border-teal-400 hover:bg-teal-50/40">
               <h2 className="font-semibold text-slate-900">Administrar clientes</h2>
               <p className="mt-1 text-sm text-[#7C7E9D]">Gestiona roles y contexto de usuarios.</p>
             </Link>
@@ -174,7 +170,7 @@ export default function AppHomePage() {
               Seguimiento de viajes activos
             </h2>
             <Link
-              href="/app/reservas"
+              href="/app/bookings"
                className="text-sm font-medium text-teal-700 hover:text-teal-600"
             >
               Ver todos
@@ -182,7 +178,7 @@ export default function AppHomePage() {
           </div>
 
           {loading ? (
-            <div className="app-surface-soft p-8 text-center">
+            <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
                <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-teal-700"></div>
               <p className="mt-2 text-sm text-slate-600">Cargando viajes...</p>
             </div>
@@ -237,9 +233,8 @@ export default function AppHomePage() {
                       
                       <div className="flex flex-col gap-2">
                         <button
-                           className="inline-flex items-center gap-2 rounded-lg bg-[#4C5372] px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-[#4C5372]/90"
+                           className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-800 shadow-sm"
                           onClick={() => {
-                            // Generar PDF de viaje con información actualizada
                             alert("Generando documentos de viaje...");
                           }}
                         >
@@ -247,8 +242,8 @@ export default function AppHomePage() {
                           Descargar
                         </button>
                         <Link
-                          href={`/app/reservas/${booking.id}`}
-                          className="inline-flex items-center gap-2 rounded-lg border border-[#949AB1] bg-white px-3 py-2 text-sm font-medium text-[#4C5372] transition-colors hover:bg-[#FFFDF6]"
+                          href={`/app/bookings/${booking.id}`}
+                          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
                         >
                           Ver detalles
                         </Link>
@@ -259,13 +254,13 @@ export default function AppHomePage() {
               })}
             </div>
           ) : (
-            <div className="rounded-xl border border-[#E2D4E0] bg-white p-8 text-center">
+            <div className="rounded-xl border border-[#E2D4E0] bg-white p-8 text-center shadow-sm">
               <FaMapMarkerAlt className="mx-auto h-12 w-12 text-slate-400" />
               <h3 className="mt-4 text-lg font-medium text-[#4C5372]">No tienes viajes próximos</h3>
               <p className="mt-1 text-sm text-[#949AB1]">¿Listo para tu próxima aventura?</p>
               <Link
                 href="/"
-                 className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#4C5372] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#4C5372]/90"
+                 className="mt-4 inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-800"
               >
                 <FaSearch className="h-4 w-4" />
                 Buscar destinos
@@ -279,7 +274,7 @@ export default function AppHomePage() {
       {customer && (
         <div className="space-y-4">
            <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-2">
-             <FaFileAlt className="h-5 w-5 text-[#4C5372]" />
+             <FaFileAlt className="h-5 w-5 text-teal-700" />
             Documentos importantes
           </h2>
           
@@ -287,7 +282,7 @@ export default function AppHomePage() {
             {mockDocuments.map((doc) => (
               <div key={doc.id} className="rounded-xl border border-[#E2D4E0] bg-[#FFFDF6] p-4 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-start gap-3">
-                  <div className="rounded-lg bg-[#E2D4E0] p-2 text-[#4C5372]">
+                  <div className="rounded-lg bg-teal-50 p-2 text-teal-700">
                     {documentTypeIcons[doc.type]}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -295,7 +290,7 @@ export default function AppHomePage() {
                     <p className="text-xs text-[#949AB1] mt-1">{documentTypeLabels[doc.type]}</p>
                     <button
                       onClick={() => window.open(doc.url, "_blank")}
-                      className="mt-2 inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-xs font-medium text-[#4C5372] transition-colors hover:bg-[#E2D4E0]"
+                      className="mt-2 inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-teal-50"
                     >
                       <FaDownload className="h-3 w-3" />
                       Descargar
@@ -308,8 +303,8 @@ export default function AppHomePage() {
           
           <div className="text-center">
             <Link
-              href="/app/documentos"
-              className="inline-flex items-center gap-2 rounded-lg border border-[#949AB1] bg-white px-4 py-2 text-sm font-medium text-[#4C5372] transition-colors hover:bg-[#FFFDF6]"
+              href="/app/documents"
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 shadow-sm"
             >
               <FaFileAlt className="h-4 w-4" />
               Ver todos los documentos
@@ -320,85 +315,85 @@ export default function AppHomePage() {
 
       {/* Quick stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-xl bg-white border border-[#E2D4E0] p-6 text-center shadow-sm">
-          <div className="text-2xl font-bold text-[#4C5372]">{activeBookings.length}</div>
-          <div className="text-sm text-[#949AB1]">Reservas activas</div>
+        <div className="rounded-xl bg-white border border-slate-200 p-6 text-center shadow-sm">
+          <div className="text-2xl font-bold text-teal-700">{activeBookings.length}</div>
+          <div className="text-sm text-slate-500">Reservas activas</div>
         </div>
-        <div className="rounded-xl bg-white border border-[#E2D4E0] p-6 text-center shadow-sm">
-          <div className="text-2xl font-bold text-[#4C5372]">0</div>
-          <div className="text-sm text-[#949AB1]">Pagos pendientes</div>
+        <div className="rounded-xl bg-white border border-slate-200 p-6 text-center shadow-sm">
+          <div className="text-2xl font-bold text-teal-700">0</div>
+          <div className="text-sm text-slate-500">Pagos pendientes</div>
         </div>
-        <div className="rounded-xl bg-white border border-[#E2D4E0] p-6 text-center shadow-sm">
-          <div className="text-2xl font-bold text-[#4C5372]">0</div>
-          <div className="text-sm text-[#949AB1]">Incidencias abiertas</div>
+        <div className="rounded-xl bg-white border border-slate-200 p-6 text-center shadow-sm">
+          <div className="text-2xl font-bold text-teal-700">0</div>
+          <div className="text-sm text-slate-500">Incidencias abiertas</div>
         </div>
-        <div className="rounded-xl bg-white border border-[#E2D4E0] p-6 text-center shadow-sm">
-          <div className="text-2xl font-bold text-[#4C5372]">$0</div>
-          <div className="text-sm text-[#949AB1]">Total invertido</div>
+        <div className="rounded-xl bg-white border border-slate-200 p-6 text-center shadow-sm">
+          <div className="text-2xl font-bold text-teal-700">$0</div>
+          <div className="text-sm text-slate-500">Total invertido</div>
         </div>
       </div>
 
       {/* Main actions */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-[#4C5372]">Acciones principales</h2>
+        <h2 className="text-xl font-semibold text-slate-800">Acciones principales</h2>
         
         <div className={`grid gap-6 ${isAdmin ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-4"}`}>
           <Link
-            href="/app/reservas"
-            className="group rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-6 shadow-sm transition-all hover:shadow-md hover:border-[#949AB1] hover:bg-[#E2D4E0]/40"
+            href="/app/bookings"
+            className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-teal-200 hover:bg-teal-50/20"
           >
             <div className="flex items-center gap-4">
-              <div className="rounded-xl bg-[#E2D4E0] p-3 group-hover:bg-[#949AB1]/40 transition-colors">
-                <FaCalendarCheck className="h-6 w-6 text-[#4C5372]" />
+              <div className="rounded-xl bg-teal-50 p-3 group-hover:bg-teal-100 transition-colors">
+                <FaCalendarCheck className="h-6 w-6 text-teal-700" />
               </div>
               <div>
                 <h3 className="font-semibold text-slate-800">Mis reservas</h3>
-                <p className="text-sm text-[#7C7E9D]">Ver y gestionar tus viajes</p>
+                <p className="text-sm text-slate-500">Ver y gestionar tus viajes</p>
               </div>
             </div>
           </Link>
 
           <Link
             href="/"
-            className="group rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-6 shadow-sm transition-all hover:shadow-md hover:border-[#949AB1] hover:bg-[#E2D4E0]/40"
+            className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-teal-200 hover:bg-teal-50/20"
           >
             <div className="flex items-center gap-4">
-              <div className="rounded-xl bg-[#E2D4E0] p-3 group-hover:bg-[#949AB1]/40 transition-colors">
-                <FaSearch className="h-6 w-6 text-[#4C5372]" />
+              <div className="rounded-xl bg-teal-50 p-3 group-hover:bg-teal-100 transition-colors">
+                <FaSearch className="h-6 w-6 text-teal-700" />
               </div>
               <div>
                 <h3 className="font-semibold text-slate-800">Buscar viajes</h3>
-                <p className="text-sm text-[#7C7E9D]">Descubre nuevos destinos</p>
+                <p className="text-sm text-slate-500">Descubre nuevos destinos</p>
               </div>
             </div>
           </Link>
 
           <Link
-            href="/app/pagos"
-            className="group rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-6 shadow-sm transition-all hover:shadow-md hover:border-[#949AB1] hover:bg-[#E2D4E0]/40"
+            href="/app/payments"
+            className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-teal-200 hover:bg-teal-50/20"
           >
             <div className="flex items-center gap-4">
-              <div className="rounded-xl bg-[#E2D4E0] p-3 transition-colors group-hover:bg-[#949AB1]/40">
-                <FaCreditCard className="h-6 w-6 text-[#4C5372]" />
+              <div className="rounded-xl bg-teal-50 p-3 transition-colors group-hover:bg-teal-100">
+                <FaCreditCard className="h-6 w-6 text-teal-700" />
               </div>
               <div>
                 <h3 className="font-semibold text-slate-800">Pagos</h3>
-                <p className="text-sm text-[#7C7E9D]">Historial y facturas</p>
+                <p className="text-sm text-slate-500">Historial y facturas</p>
               </div>
             </div>
           </Link>
 
           <Link
-            href="/app/soporte"
-            className="group rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-6 shadow-sm transition-all hover:shadow-md hover:border-purple-200 hover:bg-purple-50"
+            href="/app/support"
+            className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-purple-200 hover:bg-purple-50"
           >
             <div className="flex items-center gap-4">
-              <div className="rounded-xl bg-purple-100 p-3 group-hover:bg-purple-200 transition-colors">
+              <div className="rounded-xl bg-purple-50 p-3 group-hover:bg-purple-100 transition-colors">
                 <FaHeadset className="h-6 w-6 text-purple-600" />
               </div>
               <div>
                 <h3 className="font-semibold text-slate-800">Soporte</h3>
-                <p className="text-sm text-[#7C7E9D]">Ayuda y asistencia</p>
+                <p className="text-sm text-slate-500">Ayuda y asistencia</p>
               </div>
             </div>
           </Link>
@@ -406,31 +401,31 @@ export default function AppHomePage() {
           {(isAdmin || isOperations) && (
             <>
               <Link
-                href="/app/admin/clientes"
-                className="group rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-6 shadow-sm transition-all hover:shadow-md hover:border-[#949AB1] hover:bg-[#E2D4E0]/40"
+                href="/app/admin/customers"
+                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-teal-200 hover:bg-teal-50/20"
               >
                 <div className="flex items-center gap-4">
-                  <div className="rounded-xl bg-[#E2D4E0] p-3 group-hover:bg-[#949AB1]/40 transition-colors">
-                    <FaUsers className="h-6 w-6 text-[#4C5372]" />
+                  <div className="rounded-xl bg-teal-50 p-3 group-hover:bg-teal-100 transition-colors">
+                    <FaUsers className="h-6 w-6 text-teal-700" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-slate-800">Clientes</h3>
-                    <p className="text-sm text-[#7C7E9D]">Gestión de usuarios</p>
+                    <p className="text-sm text-slate-500">Gestión de usuarios</p>
                   </div>
                 </div>
               </Link>
 
               <Link
                 href="/app/admin/dashboard"
-                className="group rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-6 shadow-sm transition-all hover:shadow-md hover:border-[#949AB1] hover:bg-[#E2D4E0]/40"
+                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-teal-200 hover:bg-teal-50/20"
               >
                 <div className="flex items-center gap-4">
-                  <div className="rounded-xl bg-[#E2D4E0] p-3 transition-colors group-hover:bg-[#949AB1]/40">
-                    <FaChartLine className="h-6 w-6 text-[#4C5372]" />
+                  <div className="rounded-xl bg-teal-50 p-3 transition-colors group-hover:bg-teal-100">
+                    <FaChartLine className="h-6 w-6 text-teal-700" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-slate-800">Analytics</h3>
-                    <p className="text-sm text-[#7C7E9D]">Reportes y estadísticas</p>
+                    <p className="text-sm text-slate-500">Reportes y estadísticas</p>
                   </div>
                 </div>
               </Link>
@@ -440,15 +435,15 @@ export default function AppHomePage() {
           {isAdmin && (
             <Link
               href="/app/admin/dome"
-              className="group rounded-2xl border border-[#E2D4E0] bg-[#FFFDF6] p-6 shadow-sm transition-all hover:shadow-md hover:border-pink-200 hover:bg-pink-50"
+              className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-pink-200 hover:bg-pink-50"
             >
               <div className="flex items-center gap-4">
-                <div className="rounded-xl bg-pink-100 p-3 group-hover:bg-pink-200 transition-colors">
+                <div className="rounded-xl bg-pink-50 p-3 group-hover:bg-pink-100 transition-colors">
                   <FaImages className="h-6 w-6 text-pink-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-slate-800">Dome Gallery</h3>
-                  <p className="text-sm text-[#7C7E9D]">Gestionar imágenes</p>
+                  <p className="text-sm text-slate-500">Gestionar imágenes</p>
                 </div>
               </div>
             </Link>

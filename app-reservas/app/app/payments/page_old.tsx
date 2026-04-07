@@ -130,7 +130,7 @@ export default function PagosPage() {
 
         <div className="flex gap-3">
           <Link
-            href="/app/reservas"
+            href="/app/bookings"
             className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm transition hover:bg-white/10"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -218,7 +218,7 @@ export default function PagosPage() {
               </p>
             </div>
             <Link
-              href="/app/acceder"
+              href="/app/login"
               className="rounded-xl bg-amber-500/20 px-5 py-2.5 text-sm font-medium text-amber-100 transition hover:bg-amber-500/30"
             >
               Iniciar sesión
@@ -254,7 +254,7 @@ export default function PagosPage() {
             Los pagos de tus reservaciones aparecerán aquí
           </p>
           <Link
-            href="/app/reservas"
+            href="/app/bookings"
             className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-3 font-medium text-white shadow-lg shadow-violet-500/25 transition hover:shadow-violet-500/40"
           >
             Ver mis reservas

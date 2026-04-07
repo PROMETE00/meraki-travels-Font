@@ -108,8 +108,8 @@ export default function AdminPagosPage() {
       ) : null}
 
       {hydrated && !customer ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800">
-          Necesitas iniciar sesión desde <Link href="/app/perfil" className="underline">perfil</Link>.
+        <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-6 text-sm text-amber-100">
+          Necesitas iniciar sesión desde <Link href="/app/profile" className="underline">perfil</Link>.
         </div>
       ) : null}
 

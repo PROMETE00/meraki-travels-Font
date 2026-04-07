@@ -308,7 +308,7 @@ export default function ReservasPage() {
               </p>
             </div>
             <Link
-              href="/app/acceder"
+              href="/app/login"
               className="rounded-xl bg-amber-500/20 px-5 py-2.5 text-sm font-medium text-amber-100 transition hover:bg-amber-500/30"
             >
               Iniciar sesión
@@ -535,7 +535,7 @@ export default function ReservasPage() {
               </p>
             </div>
             <Link
-              href="/app/soporte"
+              href="/app/support"
               className="rounded-xl bg-violet-500/20 px-5 py-2.5 text-sm font-medium text-violet-200 transition hover:bg-violet-500/30"
             >
               Contactar soporte

@@ -93,7 +93,7 @@ export default function DocumentosPage() {
       <main className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center">
         <h1 className="text-xl font-semibold text-amber-800">Inicia sesión para ver tus documentos</h1>
         <p className="mt-2 text-sm text-amber-700">Tus documentos se generan dinámicamente desde el panel administrativo.</p>
-        <Link href="/app/acceder" className="mt-5 inline-flex rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-700">
+        <Link href="/app/login" className="mt-5 inline-flex rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-700">
           Iniciar sesión
         </Link>
       </main>
@@ -162,7 +162,7 @@ export default function DocumentosPage() {
         <section className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
           <h2 className="text-lg font-semibold text-slate-800">No hay documentos para este filtro</h2>
           <p className="mt-2 text-sm text-slate-600">Si esperabas un documento, pide soporte para que lo asignen desde administración.</p>
-          <Link href="/app/soporte" className="mt-4 inline-flex rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <Link href="/app/support" className="mt-4 inline-flex rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             Ir a soporte
           </Link>
         </section>

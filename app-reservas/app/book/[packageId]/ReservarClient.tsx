@@ -179,7 +179,7 @@ export default function ReservarClient({ packageId }: { packageId: number }) {
               </p>
             </div>
             <Link
-              href="/app/acceder"
+              href="/app/login"
               className="inline-flex items-center gap-2 rounded-full bg-teal-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-teal-700"
             >
               Iniciar sesión
@@ -212,7 +212,7 @@ export default function ReservarClient({ packageId }: { packageId: number }) {
               {error}
             </div>
             <Link
-              href="/paquetes"
+              href="/packages"
               className="inline-flex items-center gap-2 text-sm text-teal-600 hover:text-teal-700"
             >
               ← Volver a paquetes
@@ -235,7 +235,7 @@ export default function ReservarClient({ packageId }: { packageId: number }) {
         {/* Header */}
         <div className="mb-8">
           <Link
-            href={`/viaje/${packageId}`}
+            href={`/trip/${packageId}`}
             className="inline-flex items-center gap-2 text-sm text-slate-600 transition-colors hover:text-teal-600"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -497,7 +497,7 @@ export default function ReservarClient({ packageId }: { packageId: number }) {
                       onPaymentSuccess={() => {
                         setStatusMessage("¡Pago procesado exitosamente! Redirigiendo...");
                         setTimeout(() => {
-                          router.push(`/app/reservas`);
+                          router.push(`/app/bookings`);
                         }, 2000);
                       }}
                     />

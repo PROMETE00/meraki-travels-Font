@@ -55,7 +55,7 @@ export default function TravelDetailPage() {
 
   const handleReserve = () => {
     // Redirigir a la nueva página de reserva con Stripe
-    router.push(`/reservar/${id}`);
+    router.push(`/book/${id}`);
   };
 
   if (loading) {
@@ -86,7 +86,7 @@ export default function TravelDetailPage() {
             <h1 className="mb-2 text-2xl font-bold text-slate-900">Viaje no encontrado</h1>
             <p className="mb-6 text-slate-600">{error}</p>
             <Link
-              href="/paquetes"
+              href="/packages"
               className="inline-flex items-center gap-2 rounded-full bg-teal-600 px-6 py-3 font-semibold text-white transition-all hover:bg-teal-700"
             >
               Ver todos los paquetes
@@ -281,7 +281,7 @@ export default function TravelDetailPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              href="/paquetes"
+              href="/packages"
               className="rounded-full bg-white px-8 py-4 font-semibold text-slate-900 transition-all hover:bg-slate-100"
             >
               Ver más destinos
@@ -312,8 +312,8 @@ export default function TravelDetailPage() {
             </div>
             <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-600">
               <Link href="/" className="hover:text-teal-600">Inicio</Link>
-              <Link href="/paquetes" className="hover:text-teal-600">Paquetes</Link>
-              <Link href="/app/acceder" className="hover:text-teal-600">Mi cuenta</Link>
+              <Link href="/packages" className="hover:text-teal-600">Paquetes</Link>
+              <Link href="/app/login" className="hover:text-teal-600">Mi cuenta</Link>
             </div>
             <p className="text-sm text-slate-500">
               © 2024 Meraki Travels

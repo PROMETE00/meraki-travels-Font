@@ -165,7 +165,7 @@ export default function CustomerIncidenciasPage() {
         </div>
 
         <div className="flex gap-3">
-          <Link href="/app/reservas" className="rounded-xl border border-white/10 px-4 py-2 text-sm transition hover:bg-white/10">
+          <Link href="/app/bookings" className="rounded-xl border border-white/10 px-4 py-2 text-sm transition hover:bg-white/10">
             Ver reservas
           </Link>
           <button

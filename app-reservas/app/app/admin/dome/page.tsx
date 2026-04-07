@@ -468,7 +468,7 @@ export default function AdminDomePage() {
                 type="text"
                 value={form.linkUrl}
                 onChange={(e) => setForm({ ...form, linkUrl: e.target.value })}
-                placeholder="/paquetes?destino=cancun"
+                placeholder="/packages?destino=cancun"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
               />
             </div>
@@ -688,7 +688,7 @@ export default function AdminDomePage() {
           <li>• Usa imágenes de alta calidad (mínimo 800x600 px)</li>
           <li>• Las imágenes con mayor prioridad aparecen más prominentes</li>
           <li>• Puedes desactivar temporalmente sin eliminar</li>
-          <li>• URL de enlace: usa rutas relativas como <code className="rounded bg-amber-100 px-1">/paquetes?destino=cancun</code></li>
+          <li>• URL de enlace: usa rutas relativas como <code className="rounded bg-amber-100 px-1">/packages?destino=cancun</code></li>
         </ul>
       </div>
     </div>

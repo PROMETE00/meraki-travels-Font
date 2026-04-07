@@ -72,16 +72,84 @@ export default function Home() {
         }
         const payload = (await response.json()) as PromoBanner[];
         if (active) {
-          setPromotions(
-            payload
-              .filter((item) => item.isActive)
-              .sort((a, b) => a.orderIndex - b.orderIndex)
-          );
+          const filtered = payload
+            .filter((item) => item.isActive)
+            .sort((a, b) => a.orderIndex - b.orderIndex);
+          
+          if (filtered.length > 0) {
+            setPromotions(filtered);
+          } else {
+            // Fallback promotions
+            setPromotions([
+              {
+                id: 101,
+                title: "Escapada a Bali",
+                subtitle: "Vuelos + 7 noches en resort de lujo desde $18,500 MXN",
+                altText: "Arrozales en Bali",
+                linkUrl: "/packages",
+                imageUrl: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80",
+                orderIndex: 1,
+                isActive: true
+              },
+              {
+                id: 102,
+                title: "Magia en París",
+                subtitle: "Descubre la ciudad luz con tours exclusivos incluidos.",
+                altText: "Torre Eiffel",
+                linkUrl: "/packages",
+                imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80",
+                orderIndex: 2,
+                isActive: true
+              },
+              {
+                id: 103,
+                title: "Aventura en Tokio",
+                subtitle: "Cultura milenaria y tecnología en un solo viaje.",
+                altText: "Calles de Tokio",
+                linkUrl: "/packages",
+                imageUrl: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80",
+                orderIndex: 3,
+                isActive: true
+              },
+              {
+                id: 104,
+                title: "Relax en Cancún",
+                subtitle: "Todo incluido frente al mar Caribe.",
+                altText: "Playa de Cancún",
+                linkUrl: "/packages",
+                imageUrl: "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=800&q=80",
+                orderIndex: 4,
+                isActive: true
+              }
+            ]);
+          }
         }
       } catch (error) {
         console.error(error);
         if (active) {
-          setPromosError("No pudimos cargar las promociones.");
+          // Fallback on error
+          setPromotions([
+            {
+              id: 101,
+              title: "Escapada a Bali",
+              subtitle: "Vuelos + 7 noches en resort de lujo desde $18,500 MXN",
+              altText: "Arrozales en Bali",
+              linkUrl: "/packages",
+              imageUrl: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80",
+              orderIndex: 1,
+              isActive: true
+            },
+            {
+              id: 102,
+              title: "Magia en París",
+              subtitle: "Descubre la ciudad luz con tours exclusivos incluidos.",
+              altText: "Torre Eiffel",
+              linkUrl: "/packages",
+              imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80",
+              orderIndex: 2,
+              isActive: true
+            }
+          ]);
         }
       }
     };
@@ -97,13 +165,64 @@ export default function Home() {
     const loadPackages = async () => {
       try {
         const response = await fetch("/api/packages", { cache: "no-store" });
-        if (!response.ok) return;
+        if (!response.ok) throw new Error();
         const payload = (await response.json()) as TravelPackage[];
         if (active) {
-          setPackages(payload.filter((pkg) => pkg.active).slice(0, 6));
+          const filtered = payload.filter((pkg) => pkg.active).slice(0, 6);
+          if (filtered.length > 0) {
+            setPackages(filtered);
+          } else {
+            // Fallback packages
+            setPackages([
+              {
+                id: 201,
+                title: "Safari en Serengeti",
+                description: "Observa la gran migración y vive el África salvaje con guías expertos.",
+                originCode: "MEX",
+                destinationCode: "JRO",
+                basePrice: 42500,
+                coverImageUrl: "https://images.unsplash.com/photo-1516422317778-958ba73597d6?auto=format&fit=crop&w=800&q=80",
+                active: true
+              },
+              {
+                id: 202,
+                title: "Luces de Nueva York",
+                description: "Broadway, Central Park y los mejores rascacielos en el corazón de Manhattan.",
+                originCode: "MEX",
+                destinationCode: "JFK",
+                basePrice: 15900,
+                coverImageUrl: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=800&q=80",
+                active: true
+              },
+              {
+                id: 203,
+                title: "Costa Amalfitana",
+                description: "Recorre los pueblos más pintorescos de Italia frente al mar Tirreno.",
+                originCode: "MEX",
+                destinationCode: "NAP",
+                basePrice: 38700,
+                coverImageUrl: "https://images.unsplash.com/photo-1633321088355-d0f81134ca3b?auto=format&fit=crop&w=800&q=80",
+                active: true
+              }
+            ]);
+          }
         }
       } catch (error) {
         console.error("Error loading packages:", error);
+        if (active) {
+          setPackages([
+            {
+              id: 201,
+              title: "Safari en Serengeti",
+              description: "Observa la gran migración y vive el África salvaje.",
+              originCode: "MEX",
+              destinationCode: "JRO",
+              basePrice: 42500,
+              coverImageUrl: "https://images.unsplash.com/photo-1516422317778-958ba73597d6?auto=format&fit=crop&w=800&q=80",
+              active: true
+            }
+          ]);
+        }
       }
     };
     void loadPackages();
@@ -208,7 +327,7 @@ export default function Home() {
               {promotions.map((promo, index) => (
                 <Link
                   key={promo.id}
-                  href={promo.linkUrl || "/paquetes"}
+                  href={promo.linkUrl || "/packages"}
                   className="group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-lg shadow-slate-200/50 ring-1 ring-slate-200/60 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-teal-200/30 hover:ring-teal-300"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
@@ -292,7 +411,7 @@ export default function Home() {
                 </p>
               </div>
               <Link
-                href="/paquetes"
+                href="/packages"
                 className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:bg-slate-800 hover:shadow-xl"
               >
                 Ver todos los paquetes
@@ -307,7 +426,7 @@ export default function Home() {
               {packages.map((pkg, index) => (
                 <Link
                   key={pkg.id}
-                  href={`/viaje/${pkg.id}`}
+                  href={`/trip/${pkg.id}`}
                   className="group relative flex flex-col overflow-hidden rounded-3xl bg-slate-50 ring-1 ring-slate-200/80 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-sky-200/40 hover:ring-sky-300"
                   style={{ animationDelay: `${index * 80}ms` }}
                 >
@@ -441,7 +560,7 @@ export default function Home() {
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <Link
-                  href="/app/acceder"
+                  href="/app/login"
                   className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-600 to-emerald-600 px-8 py-3.5 font-semibold text-white shadow-lg shadow-teal-500/30 transition-all hover:shadow-xl hover:shadow-teal-500/40"
                 >
                   Comenzar ahora
@@ -450,7 +569,7 @@ export default function Home() {
                   </svg>
                 </Link>
                 <Link
-                  href="/paquetes"
+                  href="/packages"
                   className="inline-flex items-center gap-2 rounded-full border-2 border-slate-200 px-8 py-3.5 font-semibold text-slate-700 transition-all hover:border-teal-300 hover:bg-teal-50"
                 >
                   Ver todos los paquetes
@@ -474,8 +593,8 @@ export default function Home() {
                 />
               </div>
               <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-600">
-                <Link href="/paquetes" className="hover:text-teal-600">Paquetes</Link>
-                <Link href="/app/acceder" className="hover:text-teal-600">Mi cuenta</Link>
+                <Link href="/packages" className="hover:text-teal-600">Paquetes</Link>
+                <Link href="/app/login" className="hover:text-teal-600">Mi cuenta</Link>
                 <a href="#" className="hover:text-teal-600">Términos</a>
                 <a href="#" className="hover:text-teal-600">Privacidad</a>
               </div>

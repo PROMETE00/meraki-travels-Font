@@ -122,7 +122,7 @@ export default function PackagesPage() {
             {packages.map((pkg, index) => (
               <Link
                 key={pkg.id}
-                href={`/viaje/${pkg.id}`}
+                href={`/trip/${pkg.id}`}
                 className="reveal group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-lg shadow-slate-200/50 ring-1 ring-slate-200/60 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-teal-200/30 hover:ring-teal-300"
                 data-animate="reveal"
                 style={{ animationDelay: `${index * 80}ms` }}
@@ -255,7 +255,7 @@ export default function PackagesPage() {
             </div>
             <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-600">
               <Link href="/" className="hover:text-teal-600">Inicio</Link>
-              <Link href="/app/acceder" className="hover:text-teal-600">Mi cuenta</Link>
+              <Link href="/app/login" className="hover:text-teal-600">Mi cuenta</Link>
               <a href="#" className="hover:text-teal-600">Términos</a>
               <a href="#" className="hover:text-teal-600">Privacidad</a>
             </div>

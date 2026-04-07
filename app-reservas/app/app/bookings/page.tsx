@@ -186,7 +186,7 @@ export default function ReservasPage() {
             Buscar nuevos viajes
           </Link>
           <Link
-            href="/app/pagos"
+            href="/app/payments"
             className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
           >
             <FaMoneyBillWave className="h-4 w-4" />
@@ -268,7 +268,7 @@ export default function ReservasPage() {
             Accede a tu cuenta para ver tus reservaciones, descargar documentos y más.
           </p>
           <Link
-            href="/app/acceder"
+            href="/app/login"
             className="mt-6 inline-flex items-center gap-2 rounded-lg bg-amber-600 px-6 py-3 font-medium text-white transition-colors hover:bg-amber-700"
           >
             Iniciar sesión
@@ -302,7 +302,7 @@ export default function ReservasPage() {
               Explorar destinos
             </Link>
             <Link
-              href="/paquetes"
+              href="/packages"
               className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-6 py-3 font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
               Ver paquetes
@@ -399,7 +399,7 @@ export default function ReservasPage() {
                   )}
                   
                   <Link
-                    href={`/app/reservas/${booking.id}`}
+                    href={`/app/bookings/${booking.id}`}
                     className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
                   >
                     Ver detalles

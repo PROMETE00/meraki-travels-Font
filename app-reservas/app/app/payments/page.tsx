@@ -126,14 +126,14 @@ export default function PagosPage() {
         {/* Quick Actions */}
         <div className="flex flex-wrap gap-3">
           <Link
-            href="/app/reservas"
+            href="/app/bookings"
             className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-700"
           >
             <FaFileInvoiceDollar className="h-4 w-4" />
             Ver mis reservas
           </Link>
           <Link
-            href="/app/soporte"
+            href="/app/support"
             className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
           >
             <FaMoneyBillWave className="h-4 w-4" />
@@ -213,7 +213,7 @@ export default function PagosPage() {
             Accede a tu cuenta para revisar el historial de transacciones y comprobantes.
           </p>
           <Link
-            href="/app/acceder"
+            href="/app/login"
             className="mt-6 inline-flex items-center gap-2 rounded-lg bg-amber-600 px-6 py-3 font-medium text-white transition-colors hover:bg-amber-700"
           >
             Iniciar sesión
@@ -240,7 +240,7 @@ export default function PagosPage() {
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href="/app/reservas"
+              href="/app/bookings"
               className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-6 py-3 font-medium text-white transition-colors hover:bg-teal-700"
             >
               <FaFileInvoiceDollar className="h-5 w-5" />

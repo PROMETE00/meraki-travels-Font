@@ -336,7 +336,7 @@ export default function CustomerIncidenciasPage() {
             Accede a tu cuenta para reportar problemas y dar seguimiento a tus solicitudes.
           </p>
           <Link
-            href="/app/acceder"
+            href="/app/login"
             className="mt-6 inline-flex items-center gap-2 rounded-lg bg-amber-600 px-6 py-3 font-medium text-white transition-colors hover:bg-amber-700"
           >
             Iniciar sesión

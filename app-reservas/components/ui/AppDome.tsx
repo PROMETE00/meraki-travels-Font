@@ -83,9 +83,9 @@ export default function AppDome() {
     if (item.linkUrl) {
       router.push(item.linkUrl);
     } else if (item.id) {
-      router.push(`/viaje/${item.id}`);
+      router.push(`/trip/${item.id}`);
     } else {
-      router.push("/paquetes");
+      router.push("/packages");
     }
   };
 

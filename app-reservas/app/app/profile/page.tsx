@@ -58,7 +58,7 @@ export default function PerfilPage() {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (hydrated && !customer) {
-      router.push("/app/acceder");
+      router.push("/app/login");
     }
   }, [hydrated, customer, router]);
 
@@ -121,7 +121,7 @@ export default function PerfilPage() {
       console.error(profileError);
       if (isHttpErrorStatus(profileError, 401)) {
         logout();
-        router.push("/app/acceder");
+        router.push("/app/login");
       } else {
         setError("No pudimos actualizar tu perfil. Intenta de nuevo.");
       }
@@ -206,7 +206,7 @@ export default function PerfilPage() {
       console.error(err);
       if (isHttpErrorStatus(err, 401)) {
         logout();
-        router.push("/app/acceder");
+        router.push("/app/login");
       } else {
         setError("Error guardando preferencias.");
       }
@@ -242,7 +242,7 @@ export default function PerfilPage() {
           </div>
 
           <Link
-            href="/app/reservas"
+            href="/app/bookings"
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:shadow-md"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
