@@ -26,17 +26,14 @@ jobs:
       with:
         node-version: '20'
         cache: 'npm'
-        cache-dependency-path: meraki-travels-Font/app-reservas/package-lock.json
+        cache-dependency-path: package-lock.json
 
     - name: Install dependencies
       run: npm ci
-      working-directory: meraki-travels-Font/app-reservas
 
     - name: Build Next.js
       run: npm run build
-      working-directory: meraki-travels-Font/app-reservas
       env:
-        # Aquí puedes agregar variables de entorno necesarias para el build si las hay
         NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
     - name: Log in to the Container registry
@@ -49,7 +46,7 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
-        context: ./meraki-travels-Font/app-reservas
+        context: .
         push: true
         tags: |
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
