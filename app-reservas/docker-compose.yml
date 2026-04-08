@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-prome}/meraki-travels-frontend:latest
+    image: ghcr.io/promete00/meraki-travels-frontend:latest
     container_name: meraki-frontend-app
     restart: always
     environment:
