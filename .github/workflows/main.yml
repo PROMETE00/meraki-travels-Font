@@ -10,8 +10,32 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: app-reservas/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+      working-directory: app-reservas
+
+    - name: Run lint
+      run: npm run lint
+      working-directory: app-reservas
+      continue-on-error: true
+
   build:
     runs-on: ubuntu-latest
+    needs: lint
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
       packages: write
@@ -47,7 +71,6 @@ jobs:
     - name: Prepare Image Name
       id: image_name
       run: |
-        # Convertir a minúsculas para evitar errores en Docker
         echo "name=$(echo ${{ github.repository_owner }}/meraki-travels-frontend | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
     - name: Build and push Docker image

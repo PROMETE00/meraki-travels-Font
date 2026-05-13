@@ -16,12 +16,18 @@ services:
     ports:
       - "${HOST_PORT:-3005}:${PORT:-3005}"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${PORT:-3005}/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   tunnel:
     image: cloudflare/cloudflared:latest
     container_name: meraki-frontend-tunnel
-    restart: always
+    restart: unless-stopped
     network_mode: "service:app"
     environment:
-      - TUNNEL_TOKEN=${CLOUDFLARED_TOKEN}
+      - TUNNEL_TOKEN=${CLOUDFLARED_TOKEN:?CLOUDFLARED_TOKEN is required}
     command: tunnel --no-autoupdate --protocol http2 run

@@ -2,24 +2,31 @@ services:
   app:
     image: ghcr.io/promete00/meraki-travels-frontend:latest
     container_name: meraki-frontend-app
-    restart: always
+    restart: unless-stopped
     environment:
       PORT: ${PORT:-3005}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://merakitravelsbackend.prome.works}
       INTERNAL_API_BASE_URL: ${INTERNAL_API_BASE_URL:-http://host.docker.internal:8080}
-      DATABASE_URL: ${DATABASE_URL}
-      NOCODB_BASE_URL: ${NOCODB_BASE_URL}
-      NOCODB_SHARED_VIEW_ID: ${NOCODB_SHARED_VIEW_ID}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      NOCODB_BASE_URL: ${NOCODB_BASE_URL:?NOCODB_BASE_URL is required}
+      NOCODB_SHARED_VIEW_ID: ${NOCODB_SHARED_VIEW_ID:?NOCODB_SHARED_VIEW_ID is required}
+      NOCODB_SHARED_VIEW_PWD: ${NOCODB_SHARED_VIEW_PWD:?NOCODB_SHARED_VIEW_PWD is required}
     ports:
       - "${HOST_PORT:-3005}:${PORT:-3005}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${PORT:-3005}/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   tunnel:
     image: cloudflare/cloudflared:latest
     container_name: meraki-frontend-tunnel
-    restart: always
+    restart: unless-stopped
     network_mode: "service:app"
     environment:
-      - TUNNEL_TOKEN=${CLOUDFLARED_TOKEN}
+      - TUNNEL_TOKEN=${CLOUDFLARED_TOKEN:?CLOUDFLARED_TOKEN is required}
     command: tunnel --no-autoupdate --protocol http2 run

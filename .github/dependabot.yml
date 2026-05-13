@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/app-reservas"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "deps"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "ci"
+    commit-message:
+      prefix: "ci"
+  - package-ecosystem: "docker"
+    directory: "/app-reservas"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "docker"
+      - "frontend"
+    commit-message:
+      prefix: "docker"
