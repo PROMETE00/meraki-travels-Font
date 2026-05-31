@@ -1,10 +1,10 @@
-# Meraki Travels - Frontend 🌍✨
+# Meraki Travels - Frontend
 
 Este es el frontend moderno e interactivo del sistema de reservas **Meraki Travels**, desarrollado con **Next.js 14/15** y **React 18/19**. 
 
 Ofrece una experiencia de usuario fluida con animaciones inmersivas y una integración directa con el Backend API y NocoDB.
 
-## 🚀 Tecnologías
+## Tecnologías
 
 - **Next.js** (App Router)
 - **React 18/19**
@@ -15,7 +15,7 @@ Ofrece una experiencia de usuario fluida con animaciones inmersivas y una integr
 - **Prisma** (PostgreSQL)
 - **Docker**
 
-## 🏗️ Configuración y Despliegue con Docker
+## Configuración y Despliegue con Docker
 
 ### 1. Clonar el repositorio
 ```bash
@@ -39,14 +39,14 @@ docker-compose up -d --build
 
 ---
 
-## 📂 Características UI
+## Características UI
 - **Buscador de Viajes:** Filtros inteligentes por destino y presupuesto.
 - **Galería 3D:** Visualización de destinos en una esfera interactiva.
 - **Banners Dinámicos:** Carruseles animados sincronizados con el backend.
 - **WhatsApp Widget:** Integración directa para soporte al cliente.
 
-## 🤝 Contribuciones
+## Contribuciones
 ¡Bienvenidas! Abre un issue o un PR para mejorar la interfaz.
 
-## 📄 Licencia
+##Licencia
 Este proyecto está bajo la Licencia MIT.
