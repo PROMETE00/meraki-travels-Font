@@ -1,5 +1,5 @@
 # --- deps: instala TODAS las deps (incluye dev) para poder compilar ---
-FROM node:20-bookworm-slim AS deps
+FROM node:26-bookworm-slim AS deps
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY package.json ./
@@ -12,7 +12,7 @@ RUN \
   else npm install; fi
 
 # --- builder: compila Next con las dev deps disponibles ---
-FROM node:20-bookworm-slim AS builder
+FROM node:26-bookworm-slim AS builder
 WORKDIR /app
 ENV NODE_ENV=production
 ARG INTERNAL_API_BASE_URL=http://backend:8080
@@ -24,7 +24,7 @@ COPY . .
 RUN npm run build
 
 # --- prod-deps: solo dependencias de producción para el runtime ---
-FROM node:20-bookworm-slim AS prod-deps
+FROM node:26-bookworm-slim AS prod-deps
 WORKDIR /app
 COPY package.json ./
 COPY package-lock.json* yarn.lock* pnpm-lock.yaml* ./
@@ -35,7 +35,7 @@ RUN \
   else npm install --omit=dev; fi
 
 # --- runner: imagen final mínima ---
-FROM node:20-bookworm-slim AS runner
+FROM node:26-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
