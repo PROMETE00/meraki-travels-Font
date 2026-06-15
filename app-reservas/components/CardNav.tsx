@@ -68,14 +68,9 @@ const CardNav: React.FC<CardNavProps> = ({
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    "https://merakitravelsbackend.prome.works";
-
   // Cargar sugerencias al montar
   useEffect(() => {
-    fetch(`${API_URL}/api/search/suggestions`)
+    fetch(`/api/search/suggestions`)
       .then((res) => (res.ok ? res.json() : EMPTY_SUGGESTIONS))
       .then((data) => {
         setSuggestions({
@@ -85,7 +80,7 @@ const CardNav: React.FC<CardNavProps> = ({
         });
       })
       .catch(() => setSuggestions(EMPTY_SUGGESTIONS));
-  }, [API_URL]);
+  }, []);
 
   // Búsqueda en tiempo real con debounce
   useEffect(() => {
@@ -103,7 +98,7 @@ const CardNav: React.FC<CardNavProps> = ({
     searchTimeoutRef.current = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`${API_URL}/api/search/quick?q=${encodeURIComponent(query)}`);
+        const res = await fetch(`/api/search/quick?q=${encodeURIComponent(query)}`);
         const data = await res.json();
         setResults(data.packages || []);
         setDestinations(data.destinations || []);

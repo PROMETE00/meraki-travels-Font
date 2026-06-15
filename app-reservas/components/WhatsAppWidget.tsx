@@ -11,7 +11,7 @@ type Message = {
 };
 
 // Número de WhatsApp Business de Meraki Travels
-const WHATSAPP_NUMBER = "529541329075";
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "5215512345678";
 const BUSINESS_NAME = "Meraki Travels";
 
 const quickReplies = [

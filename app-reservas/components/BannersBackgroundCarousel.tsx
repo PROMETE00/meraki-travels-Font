@@ -62,19 +62,19 @@ export default function BannersBackgroundCarousel({
         if (imgs.length === 0) {
           imgs = [
             {
-              src: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=2000",
+              src: "/images/banners/beach_sunset.jpg",
               alt: "Playa paradisíaca al atardecer",
             },
             {
-              src: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=2000",
+              src: "/images/banners/majestic_mountains.jpg",
               alt: "Montañas majestuosas bajo el sol",
             },
             {
-              src: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&q=80&w=2000",
+              src: "/images/banners/dubai_skyline.jpg",
               alt: "Arquitectura moderna en Dubái",
             },
             {
-              src: "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&q=80&w=2000",
+              src: "/images/banners/santorini_view.jpg",
               alt: "Santorini, Grecia",
             },
           ];
@@ -87,11 +87,12 @@ export default function BannersBackgroundCarousel({
         // Set fallbacks on error too
         setSlides([
           {
-            src: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=2000",
+            src: "/images/banners/beach_sunset.jpg",
             alt: "Playa paradisíaca al atardecer",
           },
           {
-            src: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=2000",
+            src: "/images/banners/majestic_mountains.jpg",
+            alt: "Montañas majestuosas bajo el sol",
           },
         ]);
       }

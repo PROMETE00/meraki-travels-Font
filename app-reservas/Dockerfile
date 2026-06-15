@@ -15,7 +15,7 @@ RUN \
 FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 ENV NODE_ENV=production
-ARG INTERNAL_API_BASE_URL=https://merakitravelsbackend.prome.works
+ARG INTERNAL_API_BASE_URL=http://backend:8080
 ENV INTERNAL_API_BASE_URL=${INTERNAL_API_BASE_URL}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

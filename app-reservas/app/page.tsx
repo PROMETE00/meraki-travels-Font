@@ -87,7 +87,7 @@ export default function Home() {
                 subtitle: "Vuelos + 7 noches en resort de lujo desde $18,500 MXN",
                 altText: "Arrozales en Bali",
                 linkUrl: "/packages",
-                imageUrl: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80",
+                imageUrl: "/images/destinations/bali.jpg",
                 orderIndex: 1,
                 isActive: true
               },
@@ -97,7 +97,7 @@ export default function Home() {
                 subtitle: "Descubre la ciudad luz con tours exclusivos incluidos.",
                 altText: "Torre Eiffel",
                 linkUrl: "/packages",
-                imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80",
+                imageUrl: "/images/destinations/paris.jpg",
                 orderIndex: 2,
                 isActive: true
               },
@@ -107,7 +107,7 @@ export default function Home() {
                 subtitle: "Cultura milenaria y tecnología en un solo viaje.",
                 altText: "Calles de Tokio",
                 linkUrl: "/packages",
-                imageUrl: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80",
+                imageUrl: "/images/destinations/tokyo.jpg",
                 orderIndex: 3,
                 isActive: true
               },
@@ -117,7 +117,7 @@ export default function Home() {
                 subtitle: "Todo incluido frente al mar Caribe.",
                 altText: "Playa de Cancún",
                 linkUrl: "/packages",
-                imageUrl: "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=800&q=80",
+                imageUrl: "/images/destinations/cancun.jpg",
                 orderIndex: 4,
                 isActive: true
               }
@@ -135,7 +135,7 @@ export default function Home() {
               subtitle: "Vuelos + 7 noches en resort de lujo desde $18,500 MXN",
               altText: "Arrozales en Bali",
               linkUrl: "/packages",
-              imageUrl: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80",
+              imageUrl: "/images/destinations/bali.jpg",
               orderIndex: 1,
               isActive: true
             },
@@ -145,7 +145,7 @@ export default function Home() {
               subtitle: "Descubre la ciudad luz con tours exclusivos incluidos.",
               altText: "Torre Eiffel",
               linkUrl: "/packages",
-              imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80",
+              imageUrl: "/images/destinations/paris.jpg",
               orderIndex: 2,
               isActive: true
             }
@@ -181,7 +181,7 @@ export default function Home() {
                 originCode: "MEX",
                 destinationCode: "JRO",
                 basePrice: 42500,
-                coverImageUrl: "https://images.unsplash.com/photo-1516422317778-958ba73597d6?auto=format&fit=crop&w=800&q=80",
+                coverImageUrl: "/images/destinations/serengeti.jpg",
                 active: true
               },
               {
@@ -191,7 +191,7 @@ export default function Home() {
                 originCode: "MEX",
                 destinationCode: "JFK",
                 basePrice: 15900,
-                coverImageUrl: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=800&q=80",
+                coverImageUrl: "/images/destinations/newyork.jpg",
                 active: true
               },
               {
@@ -201,7 +201,7 @@ export default function Home() {
                 originCode: "MEX",
                 destinationCode: "NAP",
                 basePrice: 38700,
-                coverImageUrl: "https://images.unsplash.com/photo-1633321088355-d0f81134ca3b?auto=format&fit=crop&w=800&q=80",
+                coverImageUrl: "/images/destinations/amalfi.jpg",
                 active: true
               }
             ]);
@@ -218,7 +218,7 @@ export default function Home() {
               originCode: "MEX",
               destinationCode: "JRO",
               basePrice: 42500,
-              coverImageUrl: "https://images.unsplash.com/photo-1516422317778-958ba73597d6?auto=format&fit=crop&w=800&q=80",
+              coverImageUrl: "/images/destinations/serengeti.jpg",
               active: true
             }
           ]);
@@ -336,6 +336,7 @@ export default function Home() {
                     <img
                       src={promo.imageUrl}
                       alt={promo.altText || promo.title || "Promoción"}
+                      loading="lazy"
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
@@ -436,6 +437,7 @@ export default function Home() {
                       <img
                         src={pkg.coverImageUrl}
                         alt={pkg.title}
+                        loading="lazy"
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (

@@ -246,7 +246,7 @@ export default function TravelDetailPage() {
               </button>
 
               <Link
-                href="https://wa.me/5215512345678?text=Hola,%20me%20interesa%20información%20sobre%20este%20viaje"
+                href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "5215512345678"}?text=Hola,%20me%20interesa%20información%20sobre%20este%20viaje`}
                 target="_blank"
                 className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-slate-200 bg-white px-6 py-4 font-semibold text-slate-900 transition-all hover:border-emerald-500 hover:bg-emerald-50"
               >
@@ -287,9 +287,9 @@ export default function TravelDetailPage() {
               Ver más destinos
             </Link>
             <a
-              href="https://wa.me/5215512345678"
-              target="_blank"
-              className="rounded-full border-2 border-white bg-transparent px-8 py-4 font-semibold text-white transition-all hover:bg-white hover:text-slate-900"
+href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "5215512345678"}`}
+                target="_blank"
+                className="rounded-full border-2 border-white bg-transparent px-8 py-4 font-semibold text-white transition-all hover:bg-white hover:text-slate-900"
             >
               Contactar asesor
             </a>

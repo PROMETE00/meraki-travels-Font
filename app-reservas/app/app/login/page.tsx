@@ -330,7 +330,7 @@ export default function AccederPage() {
             <div className="w-full h-full bg-white/10 rounded-xl border border-white/30 flex items-center justify-center overflow-hidden">
               {/* Travel Image */}
               <img 
-                src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=800&auto=format&fit=crop"
+                src="/images/banners/login_bg.jpg"
                 alt="Destinos de ensueño" 
                 className="w-full h-full object-cover rounded-xl opacity-95 filter drop-shadow-2xl"
                 onError={(e) => {
